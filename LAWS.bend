@@ -25,3 +25,19 @@ law show_z:
   {
     F.Format.show_off(DT.OffsetZero{}) == "Z" : String
   }
+
+law unix_epoch:
+  {
+    D.Date.to_unix(D.Date{1970, 1, 1}) == Done{0}
+    : Result<&2, &2, D.Date.Error, U32>
+  }
+
+law weekday_thu:
+  {D.Date.weekday(D.Date{1970, 1, 1}) == D.Thu{} : D.Weekday}
+
+law from_days_2026:
+  {
+    D.Date.from_days(D.Date.to_days(D.Date{2026, 9, 18}))
+    == Done{D.Date{2026, 9, 18}}
+    : Result<&2, &2, D.Date.Error, D.Date>
+  }

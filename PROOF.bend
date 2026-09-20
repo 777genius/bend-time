@@ -15,3 +15,12 @@ def L.leap_1900():
 
 def L.show_z():
   {==}
+
+def L.unix_epoch():
+  {==}
+
+def L.weekday_thu():
+  {==}
+
+def L.from_days_2026():
+  {==}

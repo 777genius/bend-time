@@ -165,3 +165,77 @@ def OffsetDateTime.from(
   date: D.Date, time: TimeOfDay, offset: UtcOffset
 ) -> OffsetDateTime:
   OffsetDateTime{date, time, offset}
+
+def OffsetDateTime.unix_fit(+udays: U32, +sod: U32) -> Bool:
+  Bool.or(
+    U32.is_lt(udays, 49710),
+    Bool.and(U32.is_eq(udays, 49710), U32.is_le(sod, 23295))
+  )
+
+def OffsetDateTime.to_unix.add(
+  +udays: U32, +sod: U32, ok: Bool
+) -> Result<&2, &2, D.Date.Error, U32>:
+  match ok:
+    case False{}:
+      Fail{D.OutOfRange{}}
+    case True{}:
+      Done{U32.add(U32.mul(udays, 86400), sod)}
+
+def OffsetDateTime.to_unix.d(
+  +udays: U32, +sod: U32
+) -> Result<&2, &2, D.Date.Error, U32>:
+  OffsetDateTime.to_unix.add(udays, sod, OffsetDateTime.unix_fit(udays, sod))
+
+def OffsetDateTime.to_unix.ge(
+  +days: U32, +sod: U32, ok: Bool
+) -> Result<&2, &2, D.Date.Error, U32>:
+  match ok:
+    case False{}:
+      Fail{D.OutOfRange{}}
+    case True{}:
+      OffsetDateTime.to_unix.d(U32.sub(days, 719468), sod)
+
+def OffsetDateTime.to_unix.key(
+  k: Datetime.Key
+) -> Result<&2, &2, D.Date.Error, U32>:
+  match k:
+    case InstKey{+days, +sod, _}:
+      OffsetDateTime.to_unix.ge(days, sod, U32.is_ge(days, 719468))
+
+def OffsetDateTime.to_unix(
+  odt: OffsetDateTime
+) -> Result<&2, &2, D.Date.Error, U32>:
+  OffsetDateTime.to_unix.key(OffsetDateTime.to_key(odt))
+
+def OffsetDateTime.from_unix.clock(
+  date: D.Date, r: Result<&2, &2, TimeOfDay.Error, TimeOfDay>
+) -> Result<&2, &2, D.Date.Error, OffsetDateTime>:
+  match r:
+    case Fail{_}:
+      Fail{D.OutOfRange{}}
+    case Done{t}:
+      Done{OffsetDateTime.from(date, t, OffsetZero{})}
+
+def OffsetDateTime.from_unix.date(
+  +secs: U32, r: Result<&2, &2, D.Date.Error, D.Date>
+) -> Result<&2, &2, D.Date.Error, OffsetDateTime>:
+  match r:
+    case Fail{e}:
+      Fail{e}
+    case Done{date}:
+      +sod = U32.mod(secs, 86400)
+      OffsetDateTime.from_unix.clock(
+        date,
+        TimeOfDay.from(
+          U32.div(sod, 3600),
+          U32.div(U32.mod(sod, 3600), 60),
+          U32.mod(sod, 60),
+          FracNone{}
+        )
+      )
+
+def OffsetDateTime.from_unix(
+  +secs: U32
+) -> Result<&2, &2, D.Date.Error, OffsetDateTime>:
+  OffsetDateTime.from_unix.date(secs, D.Date.from_unix(secs))
+

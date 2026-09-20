@@ -46,6 +46,26 @@ def TimeTest.date_show(
     case Done{d}:
       TimeTest.ok(name, String.eq(F.Format.show_date(d), want))
 
+def TimeTest.unix_n(
+  name: String, want: U32, r: Result<&2, &2, D.Date.Error, U32>
+) -> IO(Unit):
+  match r:
+    case Fail{_}:
+      IO.die(Unit, 1, name)
+    case Done{n}:
+      TimeTest.ok(name, U32.is_eq(n, want))
+
+def TimeTest.unix_z(
+  name: String,
+  r: Result<&2, &2, F.Format.Error, DT.OffsetDateTime>,
+  want: U32
+) -> IO(Unit):
+  match r:
+    case Fail{_}:
+      IO.die(Unit, 1, name)
+    case Done{odt}:
+      TimeTest.unix_n(name, want, DT.OffsetDateTime.to_unix(odt))
+
 def TimeTest.same2(
   +name: String, a: DT.OffsetDateTime,
   r: Result<&2, &2, F.Format.Error, DT.OffsetDateTime>
@@ -108,4 +128,8 @@ def main() -> IO(Unit):
       "frac10", F.Format.read("2026-09-18T12:30:00.1234567890Z")
     )
     Unit <- TimeTest.date_read_fail("bad_date", F.Format.read_date("2026-02-30"))
+    Unit <- TimeTest.unix_z("unix_z", F.Format.read("2026-09-18T12:30:00Z"), 1789734600)
+    Unit <- TimeTest.unix_z(
+      "unix_off", F.Format.read("2026-09-18T15:30:00+03:00"), 1789734600
+    )
     IO.print("ok")

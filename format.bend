@@ -315,6 +315,8 @@ def Format.civil.mk(
   match r:
     case Fail{D.InvalidDate{yy, mm, dd}}:
       Fail{InvalidDate{yy, mm, dd}}
+    case Fail{D.OutOfRange{}}:
+      Fail{InvalidDate{y, m, d}}
     case Done{date}:
       Done{DateP{date, cur}}
 
