@@ -1,0 +1,15 @@
+#!/bin/sh
+# JS-only slice. Full gate is ./tools/e2e.
+set -eu
+PKG=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+BEND="$PKG/tools/bend"
+
+"$PKG/tools/gate"
+"$BEND" "$PKG/package.bend" --checkup
+"$BEND" "$PKG/package.bend"
+"$BEND" "$PKG/examples/readme.bend"
+"$BEND" "$PKG/examples/date.bend"
+"$BEND" "$PKG/tests/date_test.bend"
+"$BEND" "$PKG/tests/format_test.bend"
+
+echo "time check ok"

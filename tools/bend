@@ -1,0 +1,17 @@
+#!/bin/sh
+# Pinned Bend 2.0.5. Not a self-updating bend on PATH.
+set -eu
+PIN=0b7e2b11c1054f5d0f4eb955cadb47997ef1115d
+ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+BEND_HOME="${BEND_HOME:-$ROOT/.toolchain/bend}"
+MAIN="$BEND_HOME/bend2/main.ts"
+
+if [ ! -f "$MAIN" ]; then
+  echo "tools/bend: fetching Bend 2.0.5 ($PIN)" >&2
+  mkdir -p "$(dirname "$BEND_HOME")"
+  git clone --filter=blob:none --no-checkout https://github.com/bendlang/bend.git "$BEND_HOME"
+  git -C "$BEND_HOME" fetch --depth 1 origin "$PIN"
+  git -C "$BEND_HOME" checkout --detach FETCH_HEAD
+fi
+
+exec bun "$MAIN" "$@"

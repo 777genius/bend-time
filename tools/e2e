@@ -1,0 +1,75 @@
+#!/bin/sh
+# Gate, checkup, README, tests, JS + native + Node.
+set -eu
+
+PKG=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+BEND="$PKG/tools/bend"
+TMP=$(mktemp -d)
+trap 'rm -rf "$TMP"' EXIT
+
+expect_line() {
+  label=$1
+  want=$2
+  shift 2
+  got=$("$@") || {
+    echo "e2e: $label exited $?" >&2
+    exit 1
+  }
+  printf '%s\n' "$got" | grep -Fqx "$want" || {
+    echo "e2e: $label expected '$want'" >&2
+    printf '%s\n' "$got" >&2
+    exit 1
+  }
+  echo "ok $label"
+}
+
+echo "== gate / checkup / layers =="
+"$PKG/tools/gate"
+"$BEND" "$PKG/package.bend" --checkup
+"$BEND" "$PKG/package.bend"
+if "$BEND" "$PKG/date.bend" --checkup | grep -Ei 'format|parse|datetime'; then
+  echo "e2e: date.bend checkup must not include format, parse, or datetime" >&2
+  exit 1
+fi
+echo "ok date_layer"
+if "$BEND" "$PKG/datetime.bend" --checkup | grep -Ei 'format|parse'; then
+  echo "e2e: datetime.bend checkup must not include format or parse" >&2
+  exit 1
+fi
+echo "ok datetime_layer"
+if grep -F 'parse.bend' "$PKG/examples/readme.bend" "$PKG/examples/date.bend"; then
+  echo "e2e: time examples must not import parse" >&2
+  exit 1
+fi
+echo "ok format_isp"
+if grep -E 'format\.bend|parse\.bend|datetime\.bend' "$PKG/examples/date.bend"; then
+  echo "e2e: date example must import only date.bend" >&2
+  exit 1
+fi
+echo "ok date_isp"
+
+echo "== JS =="
+expect_line readme_js 2026-09-18T12:30:00Z "$BEND" "$PKG/examples/readme.bend"
+expect_line date_readme_js ok "$BEND" "$PKG/examples/date.bend"
+expect_line date_test_js ok "$BEND" "$PKG/tests/date_test.bend"
+expect_line format_test_js ok "$BEND" "$PKG/tests/format_test.bend"
+
+echo "== compile native / node =="
+"$BEND" "$PKG/examples/readme.bend" -o "$TMP/readme"
+"$BEND" "$PKG/examples/date.bend" -o "$TMP/date_readme"
+"$BEND" "$PKG/tests/date_test.bend" -o "$TMP/date_test"
+"$BEND" "$PKG/tests/date_test.bend" -o "$TMP/date_test.js"
+"$BEND" "$PKG/tests/format_test.bend" -o "$TMP/format_test"
+"$BEND" "$PKG/tests/format_test.bend" -o "$TMP/format_test.js"
+
+echo "== native =="
+expect_line readme_native 2026-09-18T12:30:00Z "$TMP/readme"
+expect_line date_readme_native ok "$TMP/date_readme"
+expect_line date_test_native ok "$TMP/date_test"
+expect_line format_test_native ok "$TMP/format_test"
+
+echo "== node =="
+expect_line date_test_node ok node "$TMP/date_test.js"
+expect_line format_test_node ok node "$TMP/format_test.js"
+
+echo "time e2e ok"

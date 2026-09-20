@@ -1,0 +1,53 @@
+#!/bin/sh
+# Proof wrapper. `bend PROOF.bend` exit 0 is not a gate (#776, #805).
+set -eu
+HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+PKG=$(CDPATH= cd -- "$HERE/.." && pwd)
+BEND="$HERE/bend"
+PROOF="$PKG/PROOF.bend"
+
+if [ ! -f "$PROOF" ]; then
+  echo "gate: missing $PROOF" >&2
+  exit 1
+fi
+
+if ! grep -q 'import ./LAWS.bend' "$PROOF"; then
+  echo "gate: PROOF must contain: import ./LAWS.bend" >&2
+  exit 1
+fi
+
+if grep -n '@unsafe' "$PROOF" >/dev/null; then
+  echo "gate: @unsafe in PROOF.bend" >&2
+  exit 1
+fi
+
+unsafe=$(
+  find "$PKG" -name '*.bend' \
+    ! -path '*/.toolchain/*' \
+    -exec grep -l '@unsafe' {} + 2>/dev/null || true
+)
+if [ -n "$unsafe" ]; then
+  echo "gate: @unsafe in:" >&2
+  echo "$unsafe" >&2
+  exit 1
+fi
+
+out=$("$BEND" "$PROOF" 2>&1) || {
+  echo "gate: bend failed" >&2
+  printf '%s\n' "$out" >&2
+  exit 1
+}
+
+printf '%s\n' "$out"
+
+printf '%s\n' "$out" | grep -q 'All terms check\.' || {
+  echo "gate: missing All terms check." >&2
+  exit 1
+}
+
+printf '%s\n' "$out" | grep -qi unsafe && {
+  echo "gate: output mentions unsafe" >&2
+  exit 1
+}
+
+exit 0

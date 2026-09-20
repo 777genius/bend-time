@@ -1,0 +1,29 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: actions/checkout@v4
+        with:
+          repository: bendlang/bend
+          ref: 0b7e2b11c1054f5d0f4eb955cadb47997ef1115d
+          path: .toolchain/bend
+      - name: clang
+        run: sudo apt-get update && sudo apt-get install -y clang
+      - name: e2e
+        env:
+          BEND_HOME: ${{ github.workspace }}/.toolchain/bend
+        run: ./tools/e2e
+
