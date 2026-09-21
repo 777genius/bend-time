@@ -40,24 +40,6 @@ def DateTest.ymd(
         )
       )
 
-def DateTest.u32(
-  name: String, r: Result<&2, &2, D.Date.Error, U32>, want: U32
-) -> IO(Unit):
-  match r:
-    case Fail{_}:
-      IO.die(Unit, 1, name)
-    case Done{n}:
-      DateTest.ok(name, U32.is_eq(n, want))
-
-def DateTest.unix_of(
-  name: String, r: Result<&2, &2, D.Date.Error, D.Date>, want: U32
-) -> IO(Unit):
-  match r:
-    case Fail{_}:
-      IO.die(Unit, 1, name)
-    case Done{d}:
-      DateTest.u32(name, D.Date.to_unix(d), want)
-
 def DateTest.thu(name: String, w: D.Weekday) -> IO(Unit):
   match w:
     case D.Thu{}:
@@ -81,15 +63,6 @@ def DateTest.round(
     case Done{date}:
       DateTest.ymd(name, D.Date.from_days(D.Date.to_days(date)), y, m, d)
 
-def DateTest.u32_fail(
-  name: String, r: Result<&2, &2, D.Date.Error, U32>
-) -> IO(Unit):
-  match r:
-    case Fail{_}:
-      IO.pure(Unit, Unit{})
-    case Done{_}:
-      IO.die(Unit, 1, name)
-
 def main() -> IO(Unit):
   do IO<Unit>:
     Unit <- DateTest.ymd("d2026", D.Date.from(2026, 9, 18), 2026, 9, 18)
@@ -107,9 +80,7 @@ def main() -> IO(Unit):
     Unit <- DateTest.ymd("sub18", D.Date.sub_days(D.Date{2026, 9, 18}, 18), 2026, 8, 31)
     Unit <- DateTest.thu("thu", D.Date.weekday(D.Date{1970, 1, 1}))
     Unit <- DateTest.fri("fri", D.Date.weekday(D.Date{2026, 9, 18}))
-    Unit <- DateTest.unix_of("unix0", D.Date.from(1970, 1, 1), 0)
-    Unit <- DateTest.unix_of("unix2026", D.Date.from(2026, 9, 18), 1789689600)
-    Unit <- DateTest.u32_fail("unix1900", D.Date.to_unix(D.Date{1900, 1, 1}))
-    Unit <- DateTest.ymd("from_unix0", D.Date.from_unix(0), 1970, 1, 1)
-    Unit <- DateTest.ymd("from_unix2026", D.Date.from_unix(1789689600), 2026, 9, 18)
+    Unit <- DateTest.ok(
+      "lt1970", D.Date.is_lt(D.Date{1970, 1, 1}, D.Date{1970, 1, 2})
+    )
     IO.print("ok")

@@ -1,7 +1,10 @@
 import Base
 import ./date.bend as D
 import ./datetime.bend as DT
+import ./duration.bend as Dur
 import ./format.bend as F
+import ./instant.bend as I
+import ./period.bend as Per
 
 law date_2026:
   {
@@ -28,8 +31,8 @@ law show_z:
 
 law unix_epoch:
   {
-    D.Date.to_unix(D.Date{1970, 1, 1}) == Done{0}
-    : Result<&2, &2, D.Date.Error, U32>
+    I.Instant.to_unix(I.Instant.from_utc_date(D.Date{1970, 1, 1})) == Done{0}
+    : Result<&2, &2, I.Instant.Error, U32>
   }
 
 law weekday_thu:
@@ -40,4 +43,23 @@ law from_days_2026:
     D.Date.from_days(D.Date.to_days(D.Date{2026, 9, 18}))
     == Done{D.Date{2026, 9, 18}}
     : Result<&2, &2, D.Date.Error, D.Date>
+  }
+
+law dur_zero:
+  {
+    Dur.Duration.add(Dur.Duration.zero(), Dur.Duration.zero())
+    == Done{Dur.Duration.zero()}
+    : Result<&2, &2, Dur.Duration.Error, Dur.Duration>
+  }
+
+law dur_secs0:
+  {
+    Dur.Duration.to_secs(Dur.Duration.from_secs(0)) == Done{0}
+    : Result<&2, &2, Dur.Duration.Error, U32>
+  }
+
+law period_norm:
+  {
+    Per.Period.from(0, 13, 0) == Per.Period.from(1, 1, 0)
+    : Result<&2, &2, Per.Period.Error, Per.Period>
   }

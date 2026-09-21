@@ -1,0 +1,322 @@
+#!/bin/sh
+# bendlint — Bend library linter.
+#
+# Token/import scanner with stable rule ids. Not a Bend parser: the checker
+# still owns match-on-param, affine, and recursion. When Bend grows an AST
+# dump, keep these ids and swap kind=re for kind=ast.
+#
+# usage:
+#   bendlint [package-dir]
+#   bendlint --list-rules
+#   bendlint --self-test
+set -eu
+
+HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+MODE=scan
+FAIL=0
+DIR=
+
+usage() {
+  printf '%s\n' "usage: bendlint [package-dir]" "       bendlint --list-rules" "       bendlint --self-test" >&2
+  exit 2
+}
+
+rel() {
+  printf '%s\n' "${1#"$DIR"/}"
+}
+
+walk() {
+  find "$DIR" \( -name '.git' -o -name '.toolchain' -o -name node_modules -o -name bendlint-testdata \) -prune -o \
+    -name '*.bend' -print
+}
+
+is_feature() {
+  base=$(basename "$1")
+  dir=$(dirname "$1")
+  [ "$dir" = "$DIR" ] || return 1
+  case $base in
+    package.bend|LAWS.bend|PROOF.bend) return 1 ;;
+  esac
+  return 0
+}
+
+# Full-line '#' comments skipped. Trailing comments and strings are still text.
+match_lines() {
+  kind=$1
+  file=$2
+  PAT="$3" KIND="$kind" awk '
+    BEGIN { pat = ENVIRON["PAT"]; kind = ENVIRON["KIND"] }
+    /^[ \t]*#/ { next }
+    kind == "import-re" && $0 !~ /^[ \t]*import[ \t]/ { next }
+    $0 ~ pat { print NR }
+  ' "$file"
+}
+
+emit() {
+  file=$1
+  line=$2
+  id=$3
+  msg=$4
+  printf '%s:%s:1: error: [%s] %s\n' "$(rel "$file")" "$line" "$id" "$msg" >&2
+}
+
+apply_file() {
+  id=$1
+  kind=$2
+  pat=$3
+  msg=$4
+  file=$5
+  [ -f "$file" ] || return 0
+  case $kind in
+    max-lines)
+      n=$(wc -l < "$file")
+      if [ "$n" -gt "$pat" ]; then
+        emit "$file" 1 "$id" "$msg"
+        FAIL=1
+      fi
+      ;;
+    re|import-re)
+      lines=$(match_lines "$kind" "$file" "$pat") || true
+      if [ -n "$lines" ]; then
+        FAIL=1
+        printf '%s\n' "$lines" | while IFS= read -r line; do
+          [ -n "$line" ] || continue
+          emit "$file" "$line" "$id" "$msg"
+        done
+      fi
+      ;;
+    *)
+      echo "bendlint: unknown kind $kind for $id" >&2
+      exit 2
+      ;;
+  esac
+}
+
+# id severity scope kind pattern message
+# scope: all | feature | file:NAME | files:a.bend,b.bend
+# kind: re | import-re | max-lines
+rule() {
+  id=$1
+  sev=$2
+  scope=$3
+  kind=$4
+  pat=$5
+  msg=$6
+  if [ "$MODE" = list ]; then
+    printf '%s\t%s\t%s\t%s\n' "$id" "$sev" "$scope" "$kind"
+    return
+  fi
+  case $scope in
+    all)
+      while IFS= read -r file; do
+        [ -n "$file" ] || continue
+        apply_file "$id" "$kind" "$pat" "$msg" "$file"
+      done <<EOF
+$(walk)
+EOF
+      ;;
+    feature)
+      while IFS= read -r file; do
+        [ -n "$file" ] || continue
+        is_feature "$file" || continue
+        apply_file "$id" "$kind" "$pat" "$msg" "$file"
+      done <<EOF
+$(walk)
+EOF
+      ;;
+    file:*)
+      apply_file "$id" "$kind" "$pat" "$msg" "$DIR/${scope#file:}"
+      ;;
+    files:*)
+      old_ifs=$IFS
+      IFS=,
+      set -- ${scope#files:}
+      IFS=$old_ifs
+      for base in "$@"; do
+        apply_file "$id" "$kind" "$pat" "$msg" "$DIR/$base"
+      done
+      ;;
+    *)
+      echo "bendlint: unknown scope $scope for $id" >&2
+      exit 2
+      ;;
+  esac
+}
+
+rules() {
+  rule no-unsafe error all re \
+    '@unsafe' \
+    'do not use @unsafe in libraries or proofs'
+  rule no-f32 error all re \
+    '(^|[^A-Za-z0-9_])F32([^A-Za-z0-9_]|$)' \
+    'F32 is unprovable and lies on JS'
+  rule no-hyphen-rel-import error all import-re \
+    'import[ \t]+\.\./[^ \t]*-' \
+    "relative import path with '-' breaks the Bend parser"
+  rule no-alias-is-type error all import-re \
+    'import .+ as (Date|Instant|Hex|Bytes|Format|Time|Utf8|Parse|Base64|Weekday)[ \t]*$' \
+    'alias must not be the type name (Date.Date); extend the catalog when a type ships'
+  rule no-payload-folds error feature re \
+    'String\.length|String\.split|List\.length' \
+    'do not call Base String.length / split / List.length on payloads'
+  rule no-todo-public error feature re \
+    '\?TODO' \
+    'TODO in a public feature file refuses publish'
+  rule max-lines error feature max-lines \
+    '800' \
+    'public feature file exceeds 800 lines; split on import/reason to change'
+  rule no-io-now error \
+    'files:date.bend,datetime.bend,bytes.bend,hex.bend,base64.bend,utf8.bend,parse.bend,format.bend,instant.bend,package.bend' \
+    re \
+    'IO\.now' \
+    'IO.now is monotonic, not wall unix; not in L0-L2 (clock.bend is the adapter)'
+  rule layer-date error file:date.bend import-re \
+    'format\.bend|parse\.bend|datetime\.bend|instant\.bend' \
+    'date.bend must not import format, parse, datetime, or instant'
+  rule layer-datetime error file:datetime.bend import-re \
+    'format\.bend|parse\.bend' \
+    'datetime.bend must not import format or parse'
+  rule layer-instant error file:instant.bend import-re \
+    'datetime\.bend|format\.bend|parse\.bend' \
+    'instant.bend must not import datetime, format, or parse'
+  rule layer-bytes error file:bytes.bend import-re \
+    'hex\.bend|base64\.bend|utf8\.bend' \
+    'bytes.bend must not import hex, base64, or utf8'
+  rule layer-parse error file:parse.bend import-re \
+    'format\.bend' \
+    'parse.bend must not import format'
+  rule no-clock-in-package error file:package.bend import-re \
+    'clock\.bend' \
+    'Clock must not enter the core publish root'
+  rule no-date-read error file:date.bend re \
+    'def[ \t]+Date\.read[ \t]*\(' \
+    'Date.read on date.bend would pull parse into L0'
+}
+
+write_fixtures() {
+  root=$1
+  g=$root/good
+  mkdir -p "$g/tests"
+  cat > "$g/date.bend" <<'EOF'
+# @unsafe is forbidden; this comment must not trip no-unsafe
+# F32 is unprovable; this comment must not trip no-f32
+# IO.now is a clock; this comment must not trip no-io-now
+# import ./format.bend as F
+import Base
+EOF
+  cat > "$g/clock.bend" <<'EOF'
+import Base
+def Clock.now() -> U32:
+  IO.now
+EOF
+  cat > "$g/package.bend" <<'EOF'
+import ./date.bend as D
+EOF
+  cat > "$g/tests/fold.bend" <<'EOF'
+import Base
+def n(xs: List(U32)) -> U32:
+  List.length(xs)
+EOF
+
+  b=$root/bad
+  mkdir -p \
+    "$b/no-unsafe" \
+    "$b/no-f32" \
+    "$b/no-hyphen-rel-import" \
+    "$b/no-alias-is-type" \
+    "$b/no-payload-folds" \
+    "$b/no-todo-public" \
+    "$b/no-io-now" \
+    "$b/layer-date" \
+    "$b/layer-datetime" \
+    "$b/layer-instant" \
+    "$b/layer-bytes" \
+    "$b/layer-parse" \
+    "$b/no-clock-in-package" \
+    "$b/no-date-read" \
+    "$b/max-lines"
+
+  printf '%s\n' '@unsafe def x():' '  1' > "$b/no-unsafe/x.bend"
+  printf '%s\n' 'def n() -> F32:' '  0.0' > "$b/no-f32/x.bend"
+  printf '%s\n' 'import ../bend-parse/parse.bend as P' > "$b/no-hyphen-rel-import/x.bend"
+  printf '%s\n' 'import ./date.bend as Date' > "$b/no-alias-is-type/x.bend"
+  printf '%s\n' 'import Base' 'def n(s: String) -> U32:' '  String.length(s)' > "$b/no-payload-folds/date.bend"
+  printf '%s\n' 'import Base' 'def Date.from() -> U32:' '  ?TODO' > "$b/no-todo-public/date.bend"
+  printf '%s\n' 'import Base' 'def n() -> U32:' '  IO.now' > "$b/no-io-now/date.bend"
+  printf '%s\n' 'import ./format.bend as F' > "$b/layer-date/date.bend"
+  printf '%s\n' 'import ./format.bend as F' > "$b/layer-datetime/datetime.bend"
+  printf '%s\n' 'import ./datetime.bend as C' > "$b/layer-instant/instant.bend"
+  printf '%s\n' 'import ./hex.bend as H' > "$b/layer-bytes/bytes.bend"
+  printf '%s\n' 'import ./format.bend as F' > "$b/layer-parse/parse.bend"
+  printf '%s\n' 'import ./clock.bend as C' > "$b/no-clock-in-package/package.bend"
+  printf '%s\n' 'def Date.read(s: String) -> Date:' '  Date{ }' > "$b/no-date-read/date.bend"
+
+  i=0
+  while [ "$i" -lt 801 ]; do
+    echo "# pad $i" >> "$b/max-lines/date.bend"
+    i=$((i + 1))
+  done
+}
+
+self_test() {
+  root=$(mktemp -d)
+  st=0
+  write_fixtures "$root"
+
+  if "$HERE/bendlint" "$root/good" 2>"$root/good.err"; then
+    :
+  else
+    echo "bendlint --self-test: good fixture must pass:" >&2
+    cat "$root/good.err" >&2
+    st=1
+  fi
+
+  for d in "$root/bad"/*; do
+    id=$(basename "$d")
+    if err=$("$HERE/bendlint" "$d" 2>&1); then
+      echo "bendlint --self-test: $id must fail" >&2
+      st=1
+      continue
+    fi
+    if ! printf '%s\n' "$err" | grep -F "[$id]" >/dev/null; then
+      echo "bendlint --self-test: $id did not emit [$id]:" >&2
+      printf '%s\n' "$err" >&2
+      st=1
+    fi
+  done
+
+  rm -rf "$root"
+  if [ "$st" -ne 0 ]; then
+    echo "bendlint --self-test: failed" >&2
+    return 1
+  fi
+  echo "bendlint --self-test: ok"
+  return 0
+}
+
+case ${1:-} in
+  -h|--help) usage ;;
+  --list-rules)
+    MODE=list
+    rules
+    exit 0
+    ;;
+  --self-test)
+    self_test
+    exit $?
+    ;;
+  -*)
+    usage
+    ;;
+esac
+
+DIR=$(CDPATH= cd -- "${1:-.}" && pwd)
+MODE=scan
+rules
+
+if [ "$FAIL" -ne 0 ]; then
+  echo "bendlint: failed (token scan; not a Bend parser)" >&2
+  exit 1
+fi
+echo "bendlint: ok"
+exit 0

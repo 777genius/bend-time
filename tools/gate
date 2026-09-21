@@ -32,6 +32,8 @@ if [ -n "$unsafe" ]; then
   exit 1
 fi
 
+"$HERE/bendlint" "$PKG"
+
 out=$("$BEND" "$PROOF" 2>&1) || {
   echo "gate: bend failed" >&2
   printf '%s\n' "$out" >&2

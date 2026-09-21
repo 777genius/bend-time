@@ -24,3 +24,12 @@ def L.weekday_thu():
 
 def L.from_days_2026():
   {==}
+
+def L.dur_zero():
+  {==}
+
+def L.dur_secs0():
+  {==}
+
+def L.period_norm():
+  {==}

@@ -1,5 +1,7 @@
 import Base
 import ./date.bend as D
+import ./duration.bend as Dur
+import ./instant.bend as I
 
 type TimeFrac is Data:
   FracNone{}
@@ -23,8 +25,8 @@ type UtcOffset is Data:
 type OffsetDateTime is Data:
   OffsetDateTime{date: D.Date, time: TimeOfDay, offset: UtcOffset}
 
-type Datetime.Key is Data:
-  InstKey{days: U32, sod: U32, nanos: U32}
+type LocalDateTime is Data:
+  LocalDateTime{date: D.Date, time: TimeOfDay}
 
 def TimeOfDay.from.frac(+h: U32, +mi: U32, +s: U32, frac: TimeFrac, ok: Bool) ->
   Result<&2, &2, TimeOfDay.Error, TimeOfDay>:
@@ -129,103 +131,78 @@ def Datetime.apply_off(
     case OffsetWest{h, mi}:
       Datetime.utc_west(days, local, Datetime.off_sec(h, mi))
 
-def Datetime.key_of2(ds: U32 & U32, nanos: U32) -> Datetime.Key:
-  (days, sod) = ds
-  InstKey{days, sod, nanos}
+def Datetime.unapply_off(
+  days: U32, utc: U32, offset: UtcOffset
+) -> U32 & U32:
+  match offset:
+    case OffsetZero{}:
+      (days, utc)
+    case OffsetEast{h, mi}:
+      Datetime.utc_west(days, utc, Datetime.off_sec(h, mi))
+    case OffsetWest{h, mi}:
+      Datetime.utc_east(days, utc, Datetime.off_sec(h, mi))
 
-def Datetime.key_of(
+def Datetime.inst_of2(ds: U32 & U32, nanos: U32) -> I.Instant:
+  (days, sod) = ds
+  I.Instant{days, sod, nanos}
+
+def Datetime.inst_of(
   date: D.Date, time: TimeOfDay, offset: UtcOffset
-) -> Datetime.Key:
+) -> I.Instant:
   match time:
     case TimeOfDay{h, mi, s, frac}:
-      Datetime.key_of2(
+      Datetime.inst_of2(
         Datetime.apply_off(D.Date.to_days(date), Datetime.sod(h, mi, s), offset),
         Datetime.frac_nanos(frac)
       )
 
-def OffsetDateTime.to_key(odt: OffsetDateTime) -> Datetime.Key:
+def OffsetDateTime.to_instant(odt: OffsetDateTime) -> I.Instant:
   match odt:
     case OffsetDateTime{date, time, offset}:
-      Datetime.key_of(date, time, offset)
-
-def Datetime.key_eq(a: Datetime.Key, b: Datetime.Key) -> Bool:
-  match a b:
-    case InstKey{+d1, +s1, +n1} InstKey{+d2, +s2, +n2}:
-      Bool.and(
-        U32.is_eq(d1, d2),
-        Bool.and(U32.is_eq(s1, s2), U32.is_eq(n1, n2))
-      )
+      Datetime.inst_of(date, time, offset)
 
 def OffsetDateTime.same_instant(
-  a: OffsetDateTime, b: OffsetDateTime
+  +a: OffsetDateTime, +b: OffsetDateTime
 ) -> Bool:
-  Datetime.key_eq(OffsetDateTime.to_key(a), OffsetDateTime.to_key(b))
+  I.Instant.is_eq(OffsetDateTime.to_instant(a), OffsetDateTime.to_instant(b))
 
 def OffsetDateTime.from(
   date: D.Date, time: TimeOfDay, offset: UtcOffset
 ) -> OffsetDateTime:
   OffsetDateTime{date, time, offset}
 
-def OffsetDateTime.unix_fit(+udays: U32, +sod: U32) -> Bool:
-  Bool.or(
-    U32.is_lt(udays, 49710),
-    Bool.and(U32.is_eq(udays, 49710), U32.is_le(sod, 23295))
-  )
-
-def OffsetDateTime.to_unix.add(
-  +udays: U32, +sod: U32, ok: Bool
+def OffsetDateTime.to_unix.map(
+  r: Result<&2, &2, I.Instant.Error, U32>
 ) -> Result<&2, &2, D.Date.Error, U32>:
-  match ok:
-    case False{}:
+  match r:
+    case Fail{_}:
       Fail{D.OutOfRange{}}
-    case True{}:
-      Done{U32.add(U32.mul(udays, 86400), sod)}
-
-def OffsetDateTime.to_unix.d(
-  +udays: U32, +sod: U32
-) -> Result<&2, &2, D.Date.Error, U32>:
-  OffsetDateTime.to_unix.add(udays, sod, OffsetDateTime.unix_fit(udays, sod))
-
-def OffsetDateTime.to_unix.ge(
-  +days: U32, +sod: U32, ok: Bool
-) -> Result<&2, &2, D.Date.Error, U32>:
-  match ok:
-    case False{}:
-      Fail{D.OutOfRange{}}
-    case True{}:
-      OffsetDateTime.to_unix.d(U32.sub(days, 719468), sod)
-
-def OffsetDateTime.to_unix.key(
-  k: Datetime.Key
-) -> Result<&2, &2, D.Date.Error, U32>:
-  match k:
-    case InstKey{+days, +sod, _}:
-      OffsetDateTime.to_unix.ge(days, sod, U32.is_ge(days, 719468))
+    case Done{n}:
+      Done{n}
 
 def OffsetDateTime.to_unix(
   odt: OffsetDateTime
 ) -> Result<&2, &2, D.Date.Error, U32>:
-  OffsetDateTime.to_unix.key(OffsetDateTime.to_key(odt))
+  OffsetDateTime.to_unix.map(I.Instant.to_unix(OffsetDateTime.to_instant(odt)))
 
-def OffsetDateTime.from_unix.clock(
-  date: D.Date, r: Result<&2, &2, TimeOfDay.Error, TimeOfDay>
+def OffsetDateTime.from_instant.clock(
+  offset: UtcOffset, date: D.Date, r: Result<&2, &2, TimeOfDay.Error, TimeOfDay>
 ) -> Result<&2, &2, D.Date.Error, OffsetDateTime>:
   match r:
     case Fail{_}:
       Fail{D.OutOfRange{}}
     case Done{t}:
-      Done{OffsetDateTime.from(date, t, OffsetZero{})}
+      Done{OffsetDateTime.from(date, t, offset)}
 
-def OffsetDateTime.from_unix.date(
-  +secs: U32, r: Result<&2, &2, D.Date.Error, D.Date>
+def OffsetDateTime.from_instant.date(
+  +sod: U32, offset: UtcOffset, r: Result<&2, &2, D.Date.Error, D.Date>
 ) -> Result<&2, &2, D.Date.Error, OffsetDateTime>:
   match r:
     case Fail{e}:
       Fail{e}
     case Done{date}:
-      +sod = U32.mod(secs, 86400)
-      OffsetDateTime.from_unix.clock(
-        date,
+      OffsetDateTime.from_instant.clock(
+        offset, date,
         TimeOfDay.from(
           U32.div(sod, 3600),
           U32.div(U32.mod(sod, 3600), 60),
@@ -234,8 +211,79 @@ def OffsetDateTime.from_unix.date(
         )
       )
 
-def OffsetDateTime.from_unix(
-  +secs: U32
+def OffsetDateTime.from_instant.pair(
+  ds: U32 & U32, offset: UtcOffset
 ) -> Result<&2, &2, D.Date.Error, OffsetDateTime>:
-  OffsetDateTime.from_unix.date(secs, D.Date.from_unix(secs))
+  (days, sod) = ds
+  OffsetDateTime.from_instant.date(sod, offset, D.Date.from_days(days))
+
+def OffsetDateTime.from_instant(
+  i: I.Instant, +offset: UtcOffset
+) -> Result<&2, &2, D.Date.Error, OffsetDateTime>:
+  match i:
+    case I.Instant{days, sod, _}:
+      OffsetDateTime.from_instant.pair(
+        Datetime.unapply_off(days, sod, offset), offset
+      )
+
+def OffsetDateTime.from_instant_utc(
+  i: I.Instant
+) -> Result<&2, &2, D.Date.Error, OffsetDateTime>:
+  OffsetDateTime.from_instant(i, OffsetZero{})
+
+def OffsetDateTime.add.odt(
+  r: Result<&2, &2, D.Date.Error, OffsetDateTime>
+) -> Result<&2, &2, I.Instant.Error, OffsetDateTime>:
+  match r:
+    case Fail{_}:
+      Fail{I.OutOfRange{}}
+    case Done{o}:
+      Done{o}
+
+def OffsetDateTime.add.map(
+  offset: UtcOffset, r: Result<&2, &2, I.Instant.Error, I.Instant>
+) -> Result<&2, &2, I.Instant.Error, OffsetDateTime>:
+  match r:
+    case Fail{e}:
+      Fail{e}
+    case Done{i}:
+      OffsetDateTime.add.odt(OffsetDateTime.from_instant(i, offset))
+
+def OffsetDateTime.add(
+  +odt: OffsetDateTime, d: Dur.Duration
+) -> Result<&2, &2, I.Instant.Error, OffsetDateTime>:
+  match odt:
+    case OffsetDateTime{_, _, +offset}:
+      OffsetDateTime.add.map(
+        offset, I.Instant.add(OffsetDateTime.to_instant(odt), d)
+      )
+
+def OffsetDateTime.sub(
+  +odt: OffsetDateTime, d: Dur.Duration
+) -> Result<&2, &2, I.Instant.Error, OffsetDateTime>:
+  match odt:
+    case OffsetDateTime{_, _, +offset}:
+      OffsetDateTime.add.map(
+        offset, I.Instant.sub(OffsetDateTime.to_instant(odt), d)
+      )
+
+def LocalDateTime.from(date: D.Date, time: TimeOfDay) -> LocalDateTime:
+  LocalDateTime{date, time}
+
+def LocalDateTime.at_offset(
+  local: LocalDateTime, offset: UtcOffset
+) -> OffsetDateTime:
+  match local:
+    case LocalDateTime{date, time}:
+      OffsetDateTime.from(date, time, offset)
+
+def OffsetDateTime.to_local(odt: OffsetDateTime) -> LocalDateTime:
+  match odt:
+    case OffsetDateTime{date, time, _}:
+      LocalDateTime.from(date, time)
+
+def OffsetDateTime.from_unix(
+  secs: U32
+) -> Result<&2, &2, D.Date.Error, OffsetDateTime>:
+  OffsetDateTime.from_instant_utc(I.Instant.from_unix(secs))
 

@@ -2,6 +2,7 @@ import Base
 import 0xe49a3e6521e1b71e55654a885f27bcc1/parse.bend as P
 import ./date.bend as D
 import ./datetime.bend as DT
+import ./instant.bend as I
 
 type Format.Error is Data:
   Unexpected{offset: Nat, char: Char}
@@ -508,3 +509,31 @@ def Format.show_read(
       Fail{e}
     case Done{odt}:
       Done{Format.show(odt)}
+
+def Format.show_instant.map(
+  r: Result<&2, &2, D.Date.Error, DT.OffsetDateTime>
+) -> Result<&2, &2, D.Date.Error, String>:
+  match r:
+    case Fail{e}:
+      Fail{e}
+    case Done{odt}:
+      Done{Format.show(odt)}
+
+def Format.show_instant(
+  i: I.Instant
+) -> Result<&2, &2, D.Date.Error, String>:
+  Format.show_instant.map(DT.OffsetDateTime.from_instant_utc(i))
+
+def Format.read_instant.map(
+  r: Result<&2, &2, Format.Error, DT.OffsetDateTime>
+) -> Result<&2, &2, Format.Error, I.Instant>:
+  match r:
+    case Fail{e}:
+      Fail{e}
+    case Done{odt}:
+      Done{DT.OffsetDateTime.to_instant(odt)}
+
+def Format.read_instant(
+  text: String
+) -> Result<&2, &2, Format.Error, I.Instant>:
+  Format.read_instant.map(Format.read(text))

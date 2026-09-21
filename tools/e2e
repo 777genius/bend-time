@@ -27,11 +27,26 @@ echo "== gate / checkup / layers =="
 "$PKG/tools/gate"
 "$BEND" "$PKG/package.bend" --checkup
 "$BEND" "$PKG/package.bend"
-if "$BEND" "$PKG/date.bend" --checkup | grep -Ei 'format|parse|datetime'; then
-  echo "e2e: date.bend checkup must not include format, parse, or datetime" >&2
+if "$BEND" "$PKG/date.bend" --checkup | grep -Ei 'format|parse|datetime|instant|duration'; then
+  echo "e2e: date.bend checkup must not include format, parse, datetime, instant, or duration" >&2
   exit 1
 fi
 echo "ok date_layer"
+if "$BEND" "$PKG/duration.bend" --checkup | grep -Ei 'date|instant|datetime|format|parse'; then
+  echo "e2e: duration.bend checkup must not include date, instant, datetime, format, or parse" >&2
+  exit 1
+fi
+echo "ok duration_layer"
+if "$BEND" "$PKG/period.bend" --checkup | grep -Ei 'instant|datetime|format|parse'; then
+  echo "e2e: period.bend checkup must not include instant, datetime, format, or parse" >&2
+  exit 1
+fi
+echo "ok period_layer"
+if "$BEND" "$PKG/instant.bend" --checkup | grep -Ei 'datetime|format|parse'; then
+  echo "e2e: instant.bend checkup must not include datetime, format, or parse" >&2
+  exit 1
+fi
+echo "ok instant_layer"
 if "$BEND" "$PKG/datetime.bend" --checkup | grep -Ei 'format|parse'; then
   echo "e2e: datetime.bend checkup must not include format or parse" >&2
   exit 1
@@ -52,15 +67,31 @@ echo "== JS =="
 expect_line readme_js 2026-09-18T12:30:00Z "$BEND" "$PKG/examples/readme.bend"
 expect_line date_readme_js ok "$BEND" "$PKG/examples/date.bend"
 expect_line unix_readme_js 1789689600 "$BEND" "$PKG/examples/unix.bend"
+expect_line duration_readme_js 5400 "$BEND" "$PKG/examples/duration.bend"
+expect_line period_readme_js ok "$BEND" "$PKG/examples/period.bend"
 expect_line date_test_js ok "$BEND" "$PKG/tests/date_test.bend"
+expect_line duration_test_js ok "$BEND" "$PKG/tests/duration_test.bend"
+expect_line period_test_js ok "$BEND" "$PKG/tests/period_test.bend"
+expect_line instant_test_js ok "$BEND" "$PKG/tests/instant_test.bend"
+expect_line local_test_js ok "$BEND" "$PKG/tests/local_test.bend"
 expect_line format_test_js ok "$BEND" "$PKG/tests/format_test.bend"
 
 echo "== compile native / node =="
 "$BEND" "$PKG/examples/readme.bend" -o "$TMP/readme"
 "$BEND" "$PKG/examples/date.bend" -o "$TMP/date_readme"
 "$BEND" "$PKG/examples/unix.bend" -o "$TMP/unix_readme"
+"$BEND" "$PKG/examples/duration.bend" -o "$TMP/duration_readme"
+"$BEND" "$PKG/examples/period.bend" -o "$TMP/period_readme"
 "$BEND" "$PKG/tests/date_test.bend" -o "$TMP/date_test"
 "$BEND" "$PKG/tests/date_test.bend" -o "$TMP/date_test.js"
+"$BEND" "$PKG/tests/duration_test.bend" -o "$TMP/duration_test"
+"$BEND" "$PKG/tests/duration_test.bend" -o "$TMP/duration_test.js"
+"$BEND" "$PKG/tests/period_test.bend" -o "$TMP/period_test"
+"$BEND" "$PKG/tests/period_test.bend" -o "$TMP/period_test.js"
+"$BEND" "$PKG/tests/instant_test.bend" -o "$TMP/instant_test"
+"$BEND" "$PKG/tests/instant_test.bend" -o "$TMP/instant_test.js"
+"$BEND" "$PKG/tests/local_test.bend" -o "$TMP/local_test"
+"$BEND" "$PKG/tests/local_test.bend" -o "$TMP/local_test.js"
 "$BEND" "$PKG/tests/format_test.bend" -o "$TMP/format_test"
 "$BEND" "$PKG/tests/format_test.bend" -o "$TMP/format_test.js"
 
@@ -68,11 +99,21 @@ echo "== native =="
 expect_line readme_native 2026-09-18T12:30:00Z "$TMP/readme"
 expect_line date_readme_native ok "$TMP/date_readme"
 expect_line unix_readme_native 1789689600 "$TMP/unix_readme"
+expect_line duration_readme_native 5400 "$TMP/duration_readme"
+expect_line period_readme_native ok "$TMP/period_readme"
 expect_line date_test_native ok "$TMP/date_test"
+expect_line duration_test_native ok "$TMP/duration_test"
+expect_line period_test_native ok "$TMP/period_test"
+expect_line instant_test_native ok "$TMP/instant_test"
+expect_line local_test_native ok "$TMP/local_test"
 expect_line format_test_native ok "$TMP/format_test"
 
 echo "== node =="
 expect_line date_test_node ok node "$TMP/date_test.js"
+expect_line duration_test_node ok node "$TMP/duration_test.js"
+expect_line period_test_node ok node "$TMP/period_test.js"
+expect_line instant_test_node ok node "$TMP/instant_test.js"
+expect_line local_test_node ok node "$TMP/local_test.js"
 expect_line format_test_node ok node "$TMP/format_test.js"
 
 echo "time e2e ok"

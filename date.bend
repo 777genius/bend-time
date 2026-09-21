@@ -173,6 +173,18 @@ def Date.is_eq(a: Date, b: Date) -> Bool:
         Bool.and(U32.is_eq(m1, m2), U32.is_eq(d1, d2))
       )
 
+def Date.is_lt(a: Date, b: Date) -> Bool:
+  U32.is_lt(Date.to_days(a), Date.to_days(b))
+
+def Date.is_gt(a: Date, b: Date) -> Bool:
+  Date.is_lt(b, a)
+
+def Date.is_le(a: Date, b: Date) -> Bool:
+  Bool.not(Date.is_lt(b, a))
+
+def Date.is_ge(a: Date, b: Date) -> Bool:
+  Bool.not(Date.is_lt(a, b))
+
 def Date.from_days.doe(+z: U32, era: U32) -> U32:
   U32.sub(z, U32.mul(era, 146097))
 
@@ -316,31 +328,4 @@ def Date.sub_ov(+z: U32, n: U32, ok: Bool) -> Result<&2, &2, Date.Error, Date>:
 def Date.sub_days(+date: Date, +n: U32) -> Result<&2, &2, Date.Error, Date>:
   +z = Date.to_days(date)
   Date.sub_ov(z, n, U32.is_ge(z, n))
-
-def Date.unix_epoch() -> U32:
-  719468
-
-def Date.to_unix.mul(+udays: U32, ok: Bool) -> Result<&2, &2, Date.Error, U32>:
-  match ok:
-    case False{}:
-      Fail{OutOfRange{}}
-    case True{}:
-      Done{U32.mul(udays, 86400)}
-
-def Date.to_unix.after(+z: U32, ok: Bool) -> Result<&2, &2, Date.Error, U32>:
-  match ok:
-    case False{}:
-      Fail{OutOfRange{}}
-    case True{}:
-      Date.to_unix.mul(U32.sub(z, 719468), True{})
-
-def Date.to_unix(date: Date) -> Result<&2, &2, Date.Error, U32>:
-  +z = Date.to_days(date)
-  Date.to_unix.after(
-    z,
-    Bool.and(U32.is_ge(z, 719468), U32.is_le(U32.sub(z, 719468), 49710))
-  )
-
-def Date.from_unix(secs: U32) -> Result<&2, &2, Date.Error, Date>:
-  Date.from_days(U32.add(U32.div(secs, 86400), 719468))
 
