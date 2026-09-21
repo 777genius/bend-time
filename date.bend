@@ -121,6 +121,65 @@ def Date.from(
 ) -> Result<&2, &2, Date.Error, Date>:
   Date.from.y(y, m, d, Bool.and(U32.is_ge(y, 1), U32.is_le(y, 9999)))
 
+def Date.dim_of.go(dim: Maybe<&2, U32>) -> Result<&2, &2, Date.Error, U32>:
+  match dim:
+    case None{}:
+      Fail{OutOfRange{}}
+    case Some{+n}:
+      Done{n}
+
+def Date.dim_of(+y: U32, +m: U32) -> Result<&2, &2, Date.Error, U32>:
+  Date.dim_of.go(Date.dim(m, Date.leap(y)))
+
+def Date.days_in_month(date: Date) -> Result<&2, &2, Date.Error, U32>:
+  match date:
+    case Date{+y, +m, _}:
+      Date.dim_of(y, m)
+
+def Date.end_of_month.go(
+  +y: U32, +m: U32, r: Result<&2, &2, Date.Error, U32>
+) -> Result<&2, &2, Date.Error, Date>:
+  match r:
+    case Fail{e}:
+      Fail{e}
+    case Done{dim}:
+      Done{Date{y, m, dim}}
+
+def Date.end_of_month(date: Date) -> Result<&2, &2, Date.Error, Date>:
+  match date:
+    case Date{+y, +m, _}:
+      Date.end_of_month.go(y, m, Date.dim_of(y, m))
+
+def Date.start_of_month(date: Date) -> Date:
+  match date:
+    case Date{y, m, _}:
+      Date{y, m, 1}
+
+def Date.start_of_year(date: Date) -> Date:
+  match date:
+    case Date{y, _, _}:
+      Date{y, 1, 1}
+
+def Date.end_of_year(date: Date) -> Date:
+  match date:
+    case Date{y, _, _}:
+      Date{y, 12, 31}
+
+def Date.with_day(date: Date, d: U32) -> Result<&2, &2, Date.Error, Date>:
+  match date:
+    case Date{+y, +m, _}:
+      Date.from(y, m, d)
+
+def Date.with_month(date: Date, m: U32) -> Result<&2, &2, Date.Error, Date>:
+  match date:
+    case Date{+y, _, +d}:
+      Date.from(y, m, d)
+
+def Date.with_year(date: Date, y: U32) -> Result<&2, &2, Date.Error, Date>:
+  match date:
+    case Date{_, +m, +d}:
+      Date.from(y, m, d)
+
 def Date.y_adj(y: U32, jf: Bool) -> U32:
   match jf:
     case True{}:
@@ -328,4 +387,100 @@ def Date.sub_ov(+z: U32, n: U32, ok: Bool) -> Result<&2, &2, Date.Error, Date>:
 def Date.sub_days(+date: Date, +n: U32) -> Result<&2, &2, Date.Error, Date>:
   +z = Date.to_days(date)
   Date.sub_ov(z, n, U32.is_ge(z, n))
+
+def Weekday.to_u32(w: Weekday) -> U32:
+  match w:
+    case Mon{}:
+      0
+    case Tue{}:
+      1
+    case Wed{}:
+      2
+    case Thu{}:
+      3
+    case Fri{}:
+      4
+    case Sat{}:
+      5
+    case Sun{}:
+      6
+
+def Weekday.fwd.gap(+cur: U32, +tgt: U32, gt: Bool) -> U32:
+  match gt:
+    case True{}:
+      U32.sub(tgt, cur)
+    case False{}:
+      U32.sub(U32.add(tgt, 7), cur)
+
+def Weekday.fwd.eq(+cur: U32, +tgt: U32, eq: Bool) -> U32:
+  match eq:
+    case True{}:
+      7
+    case False{}:
+      Weekday.fwd.gap(cur, tgt, U32.is_gt(tgt, cur))
+
+def Weekday.fwd(+cur: U32, +tgt: U32) -> U32:
+  Weekday.fwd.eq(cur, tgt, U32.is_eq(tgt, cur))
+
+def Date.next_weekday(
+  +d: Date, w: Weekday
+) -> Result<&2, &2, Date.Error, Date>:
+  Date.add_days(
+    d, Weekday.fwd(Weekday.to_u32(Date.weekday(d)), Weekday.to_u32(w))
+  )
+
+def Date.previous_weekday(
+  +d: Date, w: Weekday
+) -> Result<&2, &2, Date.Error, Date>:
+  Date.sub_days(
+    d, Weekday.fwd(Weekday.to_u32(w), Weekday.to_u32(Date.weekday(d)))
+  )
+
+def Date.next_or_same.go(
+  +d: Date, w: Weekday, eq: Bool
+) -> Result<&2, &2, Date.Error, Date>:
+  match eq:
+    case True{}:
+      Done{d}
+    case False{}:
+      Date.next_weekday(d, w)
+
+def Date.next_or_same_weekday(
+  +d: Date, +w: Weekday
+) -> Result<&2, &2, Date.Error, Date>:
+  Date.next_or_same.go(
+    d, w, U32.is_eq(Weekday.to_u32(Date.weekday(d)), Weekday.to_u32(w))
+  )
+
+def Date.previous_or_same.go(
+  +d: Date, w: Weekday, eq: Bool
+) -> Result<&2, &2, Date.Error, Date>:
+  match eq:
+    case True{}:
+      Done{d}
+    case False{}:
+      Date.previous_weekday(d, w)
+
+def Date.previous_or_same_weekday(
+  +d: Date, +w: Weekday
+) -> Result<&2, &2, Date.Error, Date>:
+  Date.previous_or_same.go(
+    d, w, U32.is_eq(Weekday.to_u32(Date.weekday(d)), Weekday.to_u32(w))
+  )
+
+def Date.until_days.go(
+  +zs: U32, +ze: U32, lt: Bool
+) -> Result<&2, &2, Date.Error, U32>:
+  match lt:
+    case True{}:
+      Fail{OutOfRange{}}
+    case False{}:
+      Done{U32.sub(ze, zs)}
+
+def Date.until_days(
+  start: Date, end: Date
+) -> Result<&2, &2, Date.Error, U32>:
+  +zs = Date.to_days(start)
+  +ze = Date.to_days(end)
+  Date.until_days.go(zs, ze, U32.is_lt(ze, zs))
 

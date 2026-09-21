@@ -33,3 +33,12 @@ def L.dur_secs0():
 
 def L.period_norm():
   {==}
+
+def L.som_2026():
+  {==}
+
+def L.between_id():
+  {==}
+
+def L.hms_zero():
+  {==}

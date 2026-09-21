@@ -51,6 +51,53 @@ def DurTest.hms(
     case Done{d}:
       DurTest.sod(name, d, days, sod)
 
+def DurTest.units(
+  name: String, r: Result<&2, &2, Dur.Duration.Error, Dur.Duration.Hms>, +h: U32, +mi: U32, +s: U32
+) -> IO(Unit):
+  match r:
+    case Fail{_}:
+      IO.die(Unit, 1, name)
+    case Done{Dur.Hms{hh, mm, ss}}:
+      DurTest.ok(
+        name,
+        Bool.and(
+          U32.is_eq(hh, h), Bool.and(U32.is_eq(mm, mi), U32.is_eq(ss, s))
+        )
+      )
+
+def DurTest.units_fail(
+  name: String, r: Result<&2, &2, Dur.Duration.Error, Dur.Duration.Hms>
+) -> IO(Unit):
+  match r:
+    case Fail{_}:
+      IO.pure(Unit, Unit{})
+    case Done{_}:
+      IO.die(Unit, 1, name)
+
+def DurTest.units_from(
+  name: String,
+  r: Result<&2, &2, Dur.Duration.Error, Dur.Duration>,
+  +h: U32, +mi: U32, +s: U32
+) -> IO(Unit):
+  match r:
+    case Fail{_}:
+      IO.die(Unit, 1, name)
+    case Done{d}:
+      DurTest.units(name, Dur.Duration.to_hms(d), h, mi, s)
+
+def DurTest.both(
+  name: String,
+  r1: Result<&2, &2, Dur.Duration.Error, Dur.Duration>,
+  r2: Result<&2, &2, Dur.Duration.Error, Dur.Duration>
+) -> IO(Unit):
+  match r1 r2:
+    case Fail{_} _:
+      IO.die(Unit, 1, name)
+    case Done{_} Fail{_}:
+      IO.die(Unit, 1, name)
+    case Done{a} Done{b}:
+      DurTest.ok(name, Dur.Duration.is_eq(a, b))
+
 def main() -> IO(Unit):
   do IO<Unit>:
     Unit <- DurTest.ok(
@@ -71,4 +118,26 @@ def main() -> IO(Unit):
     Unit <- DurTest.fail(
       "sub21", Dur.Duration.sub(Dur.Duration.from_secs(1), Dur.Duration.from_secs(2))
     )
+    Unit <- DurTest.sod("fd0", Dur.Duration.from_days(0), 0, 0)
+    Unit <- DurTest.sod("fh0", Dur.Duration.zero(), 0, 0)
+    Unit <- DurTest.hms("fm0", Dur.Duration.from_mins(0), 0, 0)
+    Unit <- DurTest.hms("fh0r", Dur.Duration.from_hours(0), 0, 0)
+    Unit <- DurTest.hms("fm90", Dur.Duration.from_mins(90), 0, 5400)
+    Unit <- DurTest.both(
+      "fm60", Dur.Duration.from_mins(60), Dur.Duration.from_hours(1)
+    )
+    Unit <- DurTest.hms("fh24", Dur.Duration.from_hours(24), 1, 0)
+    Unit <- DurTest.hms("fh90", Dur.Duration.from_hours(90), 3, 64800)
+    Unit <- DurTest.fail("fh_ov", Dur.Duration.from_hours(1193047))
+    Unit <- DurTest.fail("fm_ov", Dur.Duration.from_mins(71582789))
+    Unit <- DurTest.units("th90", Dur.Duration.to_hms(Dur.Duration.from_secs(5400)), 1, 30, 0)
+    Unit <- DurTest.units_from("th_h90", Dur.Duration.from_hours(90), 90, 0, 0)
+    Unit <- DurTest.units("th_d1", Dur.Duration.to_hms(Dur.Duration.from_days(1)), 24, 0, 0)
+    Unit <- DurTest.units(
+      "th_cap", Dur.Duration.to_hms(Dur.Duration.from_days(178956970)), 4294967280, 0, 0
+    )
+    Unit <- DurTest.units_fail(
+      "th_ov", Dur.Duration.to_hms(Dur.Duration.from_days(178956971))
+    )
+    Unit <- DurTest.units("th_ns", Dur.Duration.to_hms(Dur.Duration{0, 0, 1}), 0, 0, 0)
     IO.print("ok")

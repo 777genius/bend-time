@@ -6,6 +6,9 @@ type Duration.Error is Data:
 type Duration is Data:
   Duration{days: U32, sod: U32, nanos: U32}
 
+type Duration.Hms is Data:
+  Hms{hours: U32, minutes: U32, seconds: U32}
+
 def Duration.zero() -> Duration:
   Duration{0, 0, 0}
 
@@ -31,6 +34,9 @@ def Duration.to_secs(d: Duration) -> Result<&2, &2, Duration.Error, U32>:
 
 def Duration.from_secs(+secs: U32) -> Duration:
   Duration{U32.div(secs, 86400), U32.mod(secs, 86400), 0}
+
+def Duration.from_days(+days: U32) -> Duration:
+  Duration{days, 0, 0}
 
 def Duration.from_hms.s2(
   +sec: U32, +s: U32, ok: Bool
@@ -89,6 +95,21 @@ def Duration.from_hms(
   Duration.from_hms.r(
     h, mi, s, Bool.and(U32.is_le(mi, 59), U32.is_le(s, 59))
   )
+
+def Duration.from_hours(+h: U32) -> Result<&2, &2, Duration.Error, Duration>:
+  Duration.from_hms(h, 0, 0)
+
+def Duration.from_mins.go(
+  +mi: U32, ok: Bool
+) -> Result<&2, &2, Duration.Error, Duration>:
+  match ok:
+    case False{}:
+      Fail{OutOfRange{}}
+    case True{}:
+      Done{Duration.from_secs(U32.mul(mi, 60))}
+
+def Duration.from_mins(+mi: U32) -> Result<&2, &2, Duration.Error, Duration>:
+  Duration.from_mins.go(mi, U32.is_le(mi, U32.div(U32.not(0), 60)))
 
 def Duration.is_eq(a: Duration, b: Duration) -> Bool:
   match a b:
@@ -267,3 +288,35 @@ def Duration.sub(
   +a: Duration, +b: Duration
 ) -> Result<&2, &2, Duration.Error, Duration>:
   Duration.sub.lt(a, b, Duration.is_lt(a, b))
+
+def Duration.to_hms.ok(+days: U32, +sod: U32) -> Bool:
+  +cap = U32.div(U32.not(0), 24)
+  Bool.or(
+    U32.is_lt(days, cap),
+    Bool.and(
+      U32.is_eq(days, cap),
+      U32.is_le(U32.div(sod, 3600), U32.mod(U32.not(0), 24))
+    )
+  )
+
+def Duration.to_hms.go(
+  +days: U32, +sod: U32, ok: Bool
+) -> Result<&2, &2, Duration.Error, Duration.Hms>:
+  match ok:
+    case False{}:
+      Fail{OutOfRange{}}
+    case True{}:
+      Done{
+        Hms{
+          U32.add(U32.mul(days, 24), U32.div(sod, 3600)),
+          U32.div(U32.mod(sod, 3600), 60),
+          U32.mod(sod, 60)
+        }
+      }
+
+def Duration.to_hms(
+  d: Duration
+) -> Result<&2, &2, Duration.Error, Duration.Hms>:
+  match d:
+    case Duration{+days, +sod, _}:
+      Duration.to_hms.go(days, sod, Duration.to_hms.ok(days, sod))

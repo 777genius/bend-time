@@ -135,6 +135,19 @@ def InstantTest.from_fail(
     case Done{_}:
       IO.die(Unit, 1, name)
 
+def InstantTest.parts(
+  name: String, i: I.Instant, +days: U32, +sod: U32, +ns: U32
+) -> IO(Unit):
+  match i:
+    case I.Instant{d, s, n}:
+      InstantTest.ok(
+        name,
+        Bool.and(
+          U32.is_eq(d, days),
+          Bool.and(U32.is_eq(s, sod), U32.is_eq(n, ns))
+        )
+      )
+
 def InstantTest.until_zero(
   name: String, r: Result<&2, &2, I.Instant.Error, Dur.Duration>
 ) -> IO(Unit):
@@ -203,5 +216,20 @@ def main() -> IO(Unit):
     Unit <- InstantTest.from_fail("badsod", I.Instant.from(719468, 86400, 0))
     Unit <- InstantTest.max_add(
       "max1", I.Instant.from(D.Date.to_days(D.Date{9999, 12, 31}), 86399, 0)
+    )
+    Unit <- InstantTest.parts(
+      "tr_min", I.Instant.trunc_min(I.Instant{0, 125, 7}), 0, 120, 0
+    )
+    Unit <- InstantTest.parts(
+      "tr_min0", I.Instant.trunc_min(I.Instant{0, 120, 0}), 0, 120, 0
+    )
+    Unit <- InstantTest.parts(
+      "tr_hour", I.Instant.trunc_hour(I.Instant{0, 3661, 0}), 0, 3600, 0
+    )
+    Unit <- InstantTest.parts(
+      "tr_day", I.Instant.trunc_day(I.Instant{0, 1, 0}), 0, 0, 0
+    )
+    Unit <- InstantTest.parts(
+      "tr_y1", I.Instant.trunc_day(I.Instant{306, 1, 0}), 306, 0, 0
     )
     IO.print("ok")

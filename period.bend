@@ -104,3 +104,68 @@ def Period.add_to(
   p: Period, date: D.Date
 ) -> Result<&2, &2, D.Date.Error, D.Date>:
   Period.add_to.go(date, p)
+
+def Period.emonth(+y: U32, +m: U32) -> U32:
+  U32.add(U32.mul(y, 12), m)
+
+def Period.between.ms.from(
+  +end: D.Date, +tm: U32, r: Result<&2, &2, D.Date.Error, D.Date>
+) -> Result<&2, &2, Period.Error, Period>:
+  match r:
+    case Fail{_}:
+      Fail{OutOfRange{}}
+    case Done{start2}:
+      Period.from(
+        U32.div(tm, 12),
+        U32.mod(tm, 12),
+        U32.sub(D.Date.to_days(end), D.Date.to_days(start2))
+      )
+
+def Period.between.ms.add(
+  +start: D.Date, +end: D.Date, +tm: U32,
+  rp: Result<&2, &2, Period.Error, Period>
+) -> Result<&2, &2, Period.Error, Period>:
+  match rp:
+    case Fail{_}:
+      Fail{OutOfRange{}}
+    case Done{pM}:
+      Period.between.ms.from(end, tm, Period.add_to(pM, start))
+
+def Period.between.ms(
+  +start: D.Date, +end: D.Date, +tm: U32
+) -> Result<&2, &2, Period.Error, Period>:
+  Period.between.ms.add(start, end, tm, Period.from(0, tm, 0))
+
+def Period.between.day(
+  start: D.Date, end: D.Date, sm: U32, em: U32, borrow: Bool
+) -> Result<&2, &2, Period.Error, Period>:
+  match borrow:
+    case True{}:
+      Period.between.ms(start, end, U32.sub(U32.sub(em, sm), 1))
+    case False{}:
+      Period.between.ms(start, end, U32.sub(em, sm))
+
+def Period.between.go(
+  +start: D.Date, +end: D.Date
+) -> Result<&2, &2, Period.Error, Period>:
+  match start end:
+    case D.Date{+sy, +sm, +sd} D.Date{+ey, +em, +ed}:
+      Period.between.day(
+        start, end,
+        Period.emonth(sy, sm), Period.emonth(ey, em),
+        U32.is_lt(ed, sd)
+      )
+
+def Period.between.ord(
+  start: D.Date, end: D.Date, lt: Bool
+) -> Result<&2, &2, Period.Error, Period>:
+  match lt:
+    case True{}:
+      Fail{OutOfRange{}}
+    case False{}:
+      Period.between.go(start, end)
+
+def Period.between(
+  +start: D.Date, +end: D.Date
+) -> Result<&2, &2, Period.Error, Period>:
+  Period.between.ord(start, end, D.Date.is_lt(end, start))

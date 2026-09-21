@@ -2,6 +2,7 @@ import Base
 import ./date.bend as D
 import ./duration.bend as Dur
 import ./instant.bend as I
+import ./period.bend as Per
 
 type TimeFrac is Data:
   FracNone{}
@@ -286,4 +287,109 @@ def OffsetDateTime.from_unix(
   secs: U32
 ) -> Result<&2, &2, D.Date.Error, OffsetDateTime>:
   OffsetDateTime.from_instant_utc(I.Instant.from_unix(secs))
+
+def Datetime.ldt_inst(ldt: LocalDateTime) -> I.Instant:
+  match ldt:
+    case LocalDateTime{date, TimeOfDay{+h, +mi, +s, frac}}:
+      I.Instant{
+        D.Date.to_days(date), Datetime.sod(h, mi, s), Datetime.frac_nanos(frac)
+      }
+
+def Datetime.frac_of(+nanos: U32, z: Bool) -> TimeFrac:
+  match z:
+    case True{}:
+      FracNone{}
+    case False{}:
+      Frac{9n, nanos}
+
+def Datetime.inst_ldt.tod(
+  date: D.Date, r: Result<&2, &2, TimeOfDay.Error, TimeOfDay>
+) -> Result<&2, &2, I.Instant.Error, LocalDateTime>:
+  match r:
+    case Fail{_}:
+      Fail{I.OutOfRange{}}
+    case Done{tod}:
+      Done{LocalDateTime{date, tod}}
+
+def Datetime.inst_ldt.date(
+  +sod: U32, +nanos: U32, r: Result<&2, &2, D.Date.Error, D.Date>
+) -> Result<&2, &2, I.Instant.Error, LocalDateTime>:
+  match r:
+    case Fail{_}:
+      Fail{I.OutOfRange{}}
+    case Done{date}:
+      Datetime.inst_ldt.tod(
+        date,
+        TimeOfDay.from(
+          U32.div(sod, 3600),
+          U32.div(U32.mod(sod, 3600), 60),
+          U32.mod(sod, 60),
+          Datetime.frac_of(nanos, U32.is_eq(nanos, 0))
+        )
+      )
+
+def Datetime.inst_ldt(
+  i: I.Instant
+) -> Result<&2, &2, I.Instant.Error, LocalDateTime>:
+  match i:
+    case I.Instant{+days, +sod, +nanos}:
+      Datetime.inst_ldt.date(sod, nanos, D.Date.from_days(days))
+
+def LocalDateTime.add.map(
+  r: Result<&2, &2, I.Instant.Error, I.Instant>
+) -> Result<&2, &2, I.Instant.Error, LocalDateTime>:
+  match r:
+    case Fail{e}:
+      Fail{e}
+    case Done{i}:
+      Datetime.inst_ldt(i)
+
+def LocalDateTime.add(
+  ldt: LocalDateTime, d: Dur.Duration
+) -> Result<&2, &2, I.Instant.Error, LocalDateTime>:
+  LocalDateTime.add.map(I.Instant.add(Datetime.ldt_inst(ldt), d))
+
+def LocalDateTime.sub(
+  ldt: LocalDateTime, d: Dur.Duration
+) -> Result<&2, &2, I.Instant.Error, LocalDateTime>:
+  LocalDateTime.add.map(I.Instant.sub(Datetime.ldt_inst(ldt), d))
+
+def LocalDateTime.until(
+  start: LocalDateTime, end: LocalDateTime
+) -> Result<&2, &2, I.Instant.Error, Dur.Duration>:
+  I.Instant.until(Datetime.ldt_inst(start), Datetime.ldt_inst(end))
+
+def LocalDateTime.add_period.map(
+  time: TimeOfDay, r: Result<&2, &2, D.Date.Error, D.Date>
+) -> Result<&2, &2, D.Date.Error, LocalDateTime>:
+  match r:
+    case Fail{e}:
+      Fail{e}
+    case Done{date2}:
+      Done{LocalDateTime{date2, time}}
+
+def LocalDateTime.add_period(
+  ldt: LocalDateTime, p: Per.Period
+) -> Result<&2, &2, D.Date.Error, LocalDateTime>:
+  match ldt:
+    case LocalDateTime{+date, +time}:
+      LocalDateTime.add_period.map(time, Per.Period.add_to(p, date))
+
+def OffsetDateTime.add_period.map(
+  offset: UtcOffset, r: Result<&2, &2, D.Date.Error, LocalDateTime>
+) -> Result<&2, &2, D.Date.Error, OffsetDateTime>:
+  match r:
+    case Fail{e}:
+      Fail{e}
+    case Done{ldt}:
+      Done{LocalDateTime.at_offset(ldt, offset)}
+
+def OffsetDateTime.add_period(
+  +odt: OffsetDateTime, p: Per.Period
+) -> Result<&2, &2, D.Date.Error, OffsetDateTime>:
+  match odt:
+    case OffsetDateTime{_, _, +offset}:
+      OffsetDateTime.add_period.map(
+        offset, LocalDateTime.add_period(OffsetDateTime.to_local(odt), p)
+      )
 

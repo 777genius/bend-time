@@ -172,3 +172,23 @@ def Instant.until(
   +start: Instant, +end: Instant
 ) -> Result<&2, &2, Instant.Error, Dur.Duration>:
   Instant.until.ord(start, end, Instant.is_lt(end, start))
+
+def Instant.trunc_sec(i: Instant) -> Instant:
+  match i:
+    case Instant{days, sod, _}:
+      Instant{days, sod, 0}
+
+def Instant.trunc_min(i: Instant) -> Instant:
+  match i:
+    case Instant{days, +sod, _}:
+      Instant{days, U32.sub(sod, U32.mod(sod, 60)), 0}
+
+def Instant.trunc_hour(i: Instant) -> Instant:
+  match i:
+    case Instant{days, +sod, _}:
+      Instant{days, U32.sub(sod, U32.mod(sod, 3600)), 0}
+
+def Instant.trunc_day(i: Instant) -> Instant:
+  match i:
+    case Instant{days, _, _}:
+      Instant{days, 0, 0}

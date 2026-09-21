@@ -68,6 +68,47 @@ def PeriodTest.norm(
         )
       )
 
+def PeriodTest.fields(
+  name: String, r: Result<&2, &2, Per.Period.Error, Per.Period>, +y: U32, +m: U32, +d: U32
+) -> IO(Unit):
+  match r:
+    case Fail{_}:
+      IO.die(Unit, 1, name)
+    case Done{Per.Period{yy, mm, dd}}:
+      PeriodTest.ok(
+        name,
+        Bool.and(
+          U32.is_eq(yy, y), Bool.and(U32.is_eq(mm, m), U32.is_eq(dd, d))
+        )
+      )
+
+def PeriodTest.between_fail(
+  name: String, r: Result<&2, &2, Per.Period.Error, Per.Period>
+) -> IO(Unit):
+  match r:
+    case Fail{_}:
+      IO.pure(Unit, Unit{})
+    case Done{_}:
+      IO.die(Unit, 1, name)
+
+def PeriodTest.id.go(
+  name: String, +sy: U32, +sm: U32, +sd: U32, +ey: U32, +em: U32, +ed: U32,
+  r: Result<&2, &2, Per.Period.Error, Per.Period>
+) -> IO(Unit):
+  match r:
+    case Fail{_}:
+      IO.die(Unit, 1, name)
+    case Done{p}:
+      PeriodTest.ymd(name, Per.Period.add_to(p, D.Date{sy, sm, sd}), ey, em, ed)
+
+def PeriodTest.id(
+  name: String, +sy: U32, +sm: U32, +sd: U32, +ey: U32, +em: U32, +ed: U32
+) -> IO(Unit):
+  PeriodTest.id.go(
+    name, sy, sm, sd, ey, em, ed,
+    Per.Period.between(D.Date{sy, sm, sd}, D.Date{ey, em, ed})
+  )
+
 def main() -> IO(Unit):
   do IO<Unit>:
     Unit <- PeriodTest.add(
@@ -91,4 +132,29 @@ def main() -> IO(Unit):
     Unit <- PeriodTest.norm(
       "norm", Per.Period.from(0, 13, 0), Per.Period.from(1, 1, 0)
     )
+    Unit <- PeriodTest.fields(
+      "b0", Per.Period.between(D.Date{2026, 1, 15}, D.Date{2026, 1, 15}), 0, 0, 0
+    )
+    Unit <- PeriodTest.fields(
+      "b1d", Per.Period.between(D.Date{2026, 1, 15}, D.Date{2026, 1, 16}), 0, 0, 1
+    )
+    Unit <- PeriodTest.fields(
+      "b1m", Per.Period.between(D.Date{2026, 1, 15}, D.Date{2026, 2, 15}), 0, 1, 0
+    )
+    Unit <- PeriodTest.fields(
+      "b_jan31_feb28", Per.Period.between(D.Date{2026, 1, 31}, D.Date{2026, 2, 28}), 0, 0, 28
+    )
+    Unit <- PeriodTest.fields(
+      "b_jan31_mar1", Per.Period.between(D.Date{2026, 1, 31}, D.Date{2026, 3, 1}), 0, 1, 1
+    )
+    Unit <- PeriodTest.fields(
+      "b_jan15_mar14", Per.Period.between(D.Date{2026, 1, 15}, D.Date{2026, 3, 14}), 0, 1, 27
+    )
+    Unit <- PeriodTest.fields(
+      "b_leap", Per.Period.between(D.Date{2024, 2, 29}, D.Date{2025, 2, 28}), 0, 11, 30
+    )
+    Unit <- PeriodTest.between_fail(
+      "b_rev", Per.Period.between(D.Date{2026, 3, 1}, D.Date{2026, 1, 31})
+    )
+    Unit <- PeriodTest.id("b_id", 1, 1, 1, 9999, 12, 31)
     IO.print("ok")

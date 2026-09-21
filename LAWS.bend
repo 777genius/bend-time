@@ -63,3 +63,22 @@ law period_norm:
     Per.Period.from(0, 13, 0) == Per.Period.from(1, 1, 0)
     : Result<&2, &2, Per.Period.Error, Per.Period>
   }
+
+law som_2026:
+  {
+    D.Date.start_of_month(D.Date{2026, 9, 18}) == D.Date{2026, 9, 1}
+    : D.Date
+  }
+
+law between_id:
+  {
+    Per.Period.between(D.Date{2026, 1, 1}, D.Date{2026, 1, 1})
+    == Per.Period.from(0, 0, 0)
+    : Result<&2, &2, Per.Period.Error, Per.Period>
+  }
+
+law hms_zero:
+  {
+    Dur.Duration.to_hms(Dur.Duration.zero()) == Done{Dur.Hms{0, 0, 0}}
+    : Result<&2, &2, Dur.Duration.Error, Dur.Duration.Hms>
+  }

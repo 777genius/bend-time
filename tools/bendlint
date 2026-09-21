@@ -154,7 +154,7 @@ rules() {
     'import[ \t]+\.\./[^ \t]*-' \
     "relative import path with '-' breaks the Bend parser"
   rule no-alias-is-type error all import-re \
-    'import .+ as (Date|Instant|Hex|Bytes|Format|Time|Utf8|Parse|Base64|Weekday)[ \t]*$' \
+    'import .+ as (Date|Instant|Hex|Bytes|Format|Time|Utf8|Parse|Base64|Weekday|IsoWeek|Iso8601)[ \t]*$' \
     'alias must not be the type name (Date.Date); extend the catalog when a type ships'
   rule no-payload-folds error feature re \
     'String\.length|String\.split|List\.length' \
@@ -166,7 +166,7 @@ rules() {
     '800' \
     'public feature file exceeds 800 lines; split on import/reason to change'
   rule no-io-now error \
-    'files:date.bend,datetime.bend,bytes.bend,hex.bend,base64.bend,utf8.bend,parse.bend,format.bend,instant.bend,package.bend' \
+    'files:date.bend,datetime.bend,bytes.bend,hex.bend,base64.bend,utf8.bend,parse.bend,format.bend,instant.bend,package.bend,week.bend,iso8601.bend' \
     re \
     'IO\.now' \
     'IO.now is monotonic, not wall unix; not in L0-L2 (clock.bend is the adapter)'
@@ -177,8 +177,14 @@ rules() {
     'format\.bend|parse\.bend' \
     'datetime.bend must not import format or parse'
   rule layer-instant error file:instant.bend import-re \
-    'datetime\.bend|format\.bend|parse\.bend' \
-    'instant.bend must not import datetime, format, or parse'
+    'datetime\.bend|format\.bend|parse\.bend|period\.bend' \
+    'instant.bend must not import datetime, format, parse, or period'
+  rule layer-week error file:week.bend import-re \
+    'duration\.bend|instant\.bend|datetime\.bend|format\.bend|parse\.bend|period\.bend' \
+    'week.bend must not import duration, instant, datetime, format, parse, or period'
+  rule layer-iso8601 error file:iso8601.bend re \
+    'instant\.bend|datetime\.bend|format\.bend|\./date\.bend' \
+    'iso8601.bend must not contain instant, datetime, format, or date'
   rule layer-bytes error file:bytes.bend import-re \
     'hex\.bend|base64\.bend|utf8\.bend' \
     'bytes.bend must not import hex, base64, or utf8'
@@ -230,6 +236,7 @@ EOF
     "$b/layer-date" \
     "$b/layer-datetime" \
     "$b/layer-instant" \
+    "$b/layer-week" \
     "$b/layer-bytes" \
     "$b/layer-parse" \
     "$b/no-clock-in-package" \
@@ -246,6 +253,7 @@ EOF
   printf '%s\n' 'import ./format.bend as F' > "$b/layer-date/date.bend"
   printf '%s\n' 'import ./format.bend as F' > "$b/layer-datetime/datetime.bend"
   printf '%s\n' 'import ./datetime.bend as C' > "$b/layer-instant/instant.bend"
+  printf '%s\n' 'import ./duration.bend as Dur' > "$b/layer-week/week.bend"
   printf '%s\n' 'import ./hex.bend as H' > "$b/layer-bytes/bytes.bend"
   printf '%s\n' 'import ./format.bend as F' > "$b/layer-parse/parse.bend"
   printf '%s\n' 'import ./clock.bend as C' > "$b/no-clock-in-package/package.bend"
