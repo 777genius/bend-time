@@ -35,7 +35,7 @@ is_feature() {
   dir=$(dirname "$1")
   [ "$dir" = "$DIR" ] || return 1
   case $base in
-    package.bend|LAWS.bend|PROOF.bend) return 1 ;;
+    package.bend|LAWS.bend|PROOF.bend|ZONE_LAWS.bend|ZONE_PROOF.bend|zone_package.bend) return 1 ;;
   esac
   return 0
 }
@@ -154,7 +154,7 @@ rules() {
     'import[ \t]+\.\./[^ \t]*-' \
     "relative import path with '-' breaks the Bend parser"
   rule no-alias-is-type error all import-re \
-    'import .+ as (Date|Instant|Hex|Bytes|Format|Time|Utf8|Parse|Base64|Weekday|IsoWeek|Iso8601)[ \t]*$' \
+    'import .+ as (Date|Instant|Hex|Bytes|Format|Time|Utf8|Parse|Base64|Weekday|IsoWeek|Iso8601|Zone|ZonedDateTime|ZoneFormat)[ \t]*$' \
     'alias must not be the type name (Date.Date); extend the catalog when a type ships'
   rule no-payload-folds error feature re \
     'String\.length|String\.split|List\.length' \
@@ -166,7 +166,7 @@ rules() {
     '800' \
     'public feature file exceeds 800 lines; split on import/reason to change'
   rule no-io-now error \
-    'files:date.bend,datetime.bend,bytes.bend,hex.bend,base64.bend,utf8.bend,parse.bend,format.bend,instant.bend,package.bend,week.bend,iso8601.bend' \
+    'files:date.bend,datetime.bend,bytes.bend,hex.bend,base64.bend,utf8.bend,parse.bend,format.bend,instant.bend,package.bend,week.bend,iso8601.bend,zone.bend,zoned.bend,tzif.bend,tzif_hdr.bend,posix_tz.bend,posix_at.bend,zone_format.bend,zone_package.bend' \
     re \
     'IO\.now' \
     'IO.now is monotonic, not wall unix; not in L0-L2 (clock.bend is the adapter)'
@@ -194,6 +194,27 @@ rules() {
   rule no-clock-in-package error file:package.bend import-re \
     'clock\.bend' \
     'Clock must not enter the core publish root'
+  rule no-zone-in-package error file:package.bend import-re \
+    'zone\.bend|zoned\.bend|tzif\.bend|posix_tz\.bend|zone_format\.bend' \
+    'Zone must not enter the core publish root'
+  rule layer-zone error file:zone.bend import-re \
+    'format\.bend|tzif\.bend|zoned\.bend|parse\.bend' \
+    'zone.bend must not import format, tzif, zoned, or parse'
+  rule layer-zoned error file:zoned.bend import-re \
+    'tzif\.bend|posix_tz\.bend|posix_at\.bend|format\.bend' \
+    'zoned.bend must not import tzif, posix_tz, posix_at, or format'
+  rule layer-tzif error file:tzif.bend import-re \
+    'zoned\.bend|format\.bend' \
+    'tzif.bend must not import zoned or format'
+  rule layer-posix error file:posix_tz.bend import-re \
+    'zone\.bend|tzif\.bend|zoned\.bend|format\.bend' \
+    'posix_tz.bend must not import zone, tzif, zoned, or format'
+  rule layer-posix-at error file:posix_at.bend import-re \
+    'zone\.bend|tzif\.bend|zoned\.bend|format\.bend' \
+    'posix_at.bend must not import zone, tzif, zoned, or format'
+  rule layer-zone-format error file:zone_format.bend import-re \
+    'parse\.bend|tzif\.bend|posix_tz\.bend|posix_at\.bend' \
+    'zone_format.bend must not import parse, tzif, or posix'
   rule no-date-read error file:date.bend re \
     'def[ \t]+Date\.read[ \t]*\(' \
     'Date.read on date.bend would pull parse into L0'

@@ -32,6 +32,10 @@ Unix is an Instant view, not a Date method.
 | `-00:00`, space vs `T`, missing offset, `:60`, 10th frac digit | tested | |
 | `read(show(x))` keeps the instant | tested | Z / +03:00 / +00:00 |
 | `PT1H30M` / `P1Y2M` show and read | tested | Iso8601 |
+| `Zone.at(fixed(Z), from_unix(0)) = OffsetZero` | proved | ZONE_PROOF |
+| NY 2026-03-08 02:30 gap / 01:30 fold earlier+later | tested | Zone |
+| Moscow 2026-09-18 15:30 → East 3, unix 1789734600 | tested | TZif |
 
 No `@unsafe`. No `F32`. No `IO.now`. Payload walks do not call Base
-`String.length` / `String.split` / `List.length`.
+`String.length` / `String.split` / `List.length`. Core `PROOF.bend` does
+not import zone.

@@ -1,0 +1,49 @@
+#!/bin/sh
+# Zone proof wrapper. Core tools/gate stays core-only.
+set -eu
+HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+PKG=$(CDPATH= cd -- "$HERE/.." && pwd)
+BEND="$HERE/bend"
+PROOF="$PKG/ZONE_PROOF.bend"
+
+if [ ! -f "$PROOF" ]; then
+  echo "gate-zone: missing $PROOF" >&2
+  exit 1
+fi
+
+if ! grep -q 'import ./ZONE_LAWS.bend' "$PROOF"; then
+  echo "gate-zone: ZONE_PROOF must contain: import ./ZONE_LAWS.bend" >&2
+  exit 1
+fi
+
+if grep -n '@unsafe' "$PROOF" >/dev/null; then
+  echo "gate-zone: @unsafe in ZONE_PROOF.bend" >&2
+  exit 1
+fi
+
+if grep -E 'zone\.bend|zoned\.bend|tzif\.bend|posix_tz\.bend|zone_format\.bend|ZONE_' "$PKG/PROOF.bend" "$PKG/LAWS.bend"; then
+  echo "gate-zone: core PROOF/LAWS must stay zone-free" >&2
+  exit 1
+fi
+
+"$HERE/bendlint" "$PKG"
+
+out=$("$BEND" "$PROOF" 2>&1) || {
+  echo "gate-zone: bend failed" >&2
+  printf '%s\n' "$out" >&2
+  exit 1
+}
+
+printf '%s\n' "$out"
+
+printf '%s\n' "$out" | grep -q 'All terms check\.' || {
+  echo "gate-zone: missing All terms check." >&2
+  exit 1
+}
+
+printf '%s\n' "$out" | grep -qi unsafe && {
+  echo "gate-zone: output mentions unsafe" >&2
+  exit 1
+}
+
+exit 0

@@ -1,6 +1,6 @@
 # bend-time
 
-Proleptic Gregorian dates, UTC instants, elapsed `Duration`, calendar `Period`, ISO week, `P`/`PT`, and an RFC 3339 **subset** for [Bend 2](https://github.com/bendlang/bend). No clock. No IANA.
+Proleptic Gregorian dates, UTC instants, elapsed `Duration`, calendar `Period`, ISO week, `P`/`PT`, an RFC 3339 **subset**, IANA zones from TZif, and RFC 9557 text for [Bend 2](https://github.com/bendlang/bend). No clock. Zone is a second package root (`zone_package.bend`); it is not on the core hub hash.
 
 ## Install
 
@@ -18,6 +18,23 @@ import 0x9b6a4fc7ceea91864a75396e1b8365e5/iso8601.bend as Iso
 [date](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/date.bend) · [week](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/week.bend) · [instant](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/instant.bend) · [duration](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/duration.bend) · [period](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/period.bend) · [datetime](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/datetime.bend) · [format](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/format.bend) · [iso8601](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/iso8601.bend) · [manifest](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/manifest)
 
 This hash is v0.4.0. v0.3.0 was `0x6ce79f1afc193de100ced4c79d7e2350`. `format.bend` and `iso8601.bend` pull [bend-parse](https://github.com/777genius/bend-parse) as `0xe49a3e6521e1b71e55654a885f27bcc1`. From this repo: `import ./date.bend as D`, `import ./week.bend as W`, `import ./iso8601.bend as Iso`.
+
+Zone is a second hash (v0.5.0). Core stays `0x9b6a4fc7ceea91864a75396e1b8365e5`.
+
+```python
+import 0x5118d7c8d8a6cbdfca48647d1a5a6fde/zone.bend as Z
+import 0x5118d7c8d8a6cbdfca48647d1a5a6fde/zoned.bend as Zd
+import 0x5118d7c8d8a6cbdfca48647d1a5a6fde/tzif.bend as Tf
+import 0x5118d7c8d8a6cbdfca48647d1a5a6fde/zone_format.bend as Zf
+```
+
+[zone](https://hub.bend-lang.com/0x5118d7c8d8a6cbdfca48647d1a5a6fde/zone.bend) · [zoned](https://hub.bend-lang.com/0x5118d7c8d8a6cbdfca48647d1a5a6fde/zoned.bend) · [tzif](https://hub.bend-lang.com/0x5118d7c8d8a6cbdfca48647d1a5a6fde/tzif.bend) · [zone_format](https://hub.bend-lang.com/0x5118d7c8d8a6cbdfca48647d1a5a6fde/zone_format.bend) · [manifest](https://hub.bend-lang.com/0x5118d7c8d8a6cbdfca48647d1a5a6fde/manifest)
+
+`from_tzif` is on `tzif.bend`. Copy: [`examples/zoned.bend`](examples/zoned.bend) prints `1789734600`. [`examples/zone.bend`](examples/zone.bend) prints `2026-09-18T15:30:00+03:00[Europe/Moscow]`.
+
+## v0.5
+
+IANA zones from TZif, POSIX TZ `M`-rules, `ZonedDateTime`, RFC 9557 `[id]`. Gap and fold Fail on `resolve`. `add(Duration)` re-resolves; `add_period` is civil then `from_local`. No registry. No Clock. Core hub hash unchanged.
 
 ## v0.4
 
@@ -114,6 +131,24 @@ Format.read_instant / show_instant
 
 Iso8601.show_duration / read_duration
 Iso8601.show_period / read_period
+
+Zone.fixed(offset) -> Zone
+Zone.id(z) -> String
+Zone.at(z, instant) -> Result<UtcOffset, Zone.Error>
+Zone.resolve / resolve_earlier / resolve_later
+Zone.from_tzif(id, bytes) -> Result<Zone, Zone.Error>   # tzif.bend
+
+ZonedDateTime.from_instant(i, z) -> Result<ZonedDateTime, Zone.Error>
+ZonedDateTime.from_local(ldt, z) -> Result<ZonedDateTime, Zone.Error>
+ZonedDateTime.to_instant(zdt) -> Instant
+ZonedDateTime.to_local / to_offset / to_odt
+ZonedDateTime.zone(zdt) -> Zone
+ZonedDateTime.same_instant(a, b) -> Bool
+ZonedDateTime.add / sub            Duration
+ZonedDateTime.add_period(zdt, p) -> Result<ZonedDateTime, Zone.Error>
+
+ZoneFormat.show(zdt) -> Result<String, ZoneFormat.Error>
+ZoneFormat.read(text, zone) -> Result<ZonedDateTime, ZoneFormat.Error>
 ```
 
 - Years `1..9999`. Invalid civil dates fail. `with_*` is strict (`Date.from`); month clamp is `Period.add_to` only (`2026-01-31` + 1 month → `2026-02-28`).
@@ -124,12 +159,14 @@ Iso8601.show_period / read_period
 - `Weekday` is Mon..Sun. `1970-01-01` is Thursday. `0001-01-01` is Monday.
 - RFC 3339: offset required. `Z` and `+00:00` are 0; `show` emits `Z`; `-00:00` fails. No `:60`, no `24:00:00`, no space instead of `T`, at most 9 fraction digits.
 - `Iso8601` duration is `P[nD]T[nH][nM][nS]`. Period is `P[nY][nM][nW][nD]` (`W` = 7 days). `P1Y` as Duration fails. Mixed `P1YT1H` fails both. Trailing space is `Extra`. `read(show(x))` keeps the value, not the spelling.
+- `Zone` is Fixed or IANA rules. `from_local` is strict `resolve` (gap and fold Fail). `add(Duration)` re-resolves the Instant; `add_period` moves civil time then `from_local`. They do not share a path and do not call `OffsetDateTime.add`.
+- RFC 9557 `show`/`read` split on `[` first. `read` takes a caller-supplied `Zone`; there is no registry. Offset in the text must match `Zone.at`. Fold is the offset, not `resolve`.
 
 `Format.Error` wraps parse failures. A format consumer does not import parse.
 
 ## Proofs
 
-Closed date/leap/`Z`/epoch laws are **proved**. Calendar movers, `between`, trunc, and `P`/`PT` are **tested**. Table: [docs/proof-status.md](docs/proof-status.md).
+Closed date/leap/`Z`/epoch laws are **proved**. `Zone.at(fixed(Z), unix 0)` is **proved** in `ZONE_PROOF.bend` (`./tools/gate-zone`). Calendar movers, DST gap/fold, Moscow 15:30, and RFC 9557 are **tested**. Table: [docs/proof-status.md](docs/proof-status.md).
 
 ## Check
 
@@ -137,6 +174,7 @@ Bend **2.0.5** (`0b7e2b11`), bun 1.3.11, clang 14+. Pin: [docs/compatibility.md]
 
 ```sh
 ./tools/e2e
+./tools/e2e-zone
 ```
 
 ## License

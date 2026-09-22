@@ -1,0 +1,117 @@
+#!/bin/sh
+# Zone hash: JS + native + node. Core package.bend must stay zone-free.
+set -eu
+
+PKG=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+BEND="$PKG/tools/bend"
+TMP=$(mktemp -d)
+trap 'rm -rf "$TMP"' EXIT
+
+expect_line() {
+  label=$1
+  want=$2
+  shift 2
+  got=$("$@") || {
+    echo "e2e-zone: $label exited $?" >&2
+    exit 1
+  }
+  printf '%s\n' "$got" | grep -Fqx "$want" || {
+    echo "e2e-zone: $label expected '$want'" >&2
+    printf '%s\n' "$got" >&2
+    exit 1
+  }
+  echo "ok $label"
+}
+
+if grep -E 'zone\.bend|zoned\.bend|tzif\.bend|posix_tz\.bend|zone_format\.bend' "$PKG/package.bend"; then
+  echo "e2e-zone: package.bend must not import zone" >&2
+  exit 1
+fi
+echo "ok core_package_no_zone"
+
+echo "== gate / checkup / layers =="
+"$PKG/tools/gate"
+"$PKG/tools/gate-zone"
+"$BEND" "$PKG/zone_package.bend" --checkup
+"$BEND" "$PKG/zone_package.bend"
+if grep -E 'format\.bend|tzif\.bend|zoned\.bend|parse\.bend' "$PKG/zone.bend"; then
+  echo "e2e-zone: zone.bend source must not contain format, tzif, zoned, or parse" >&2
+  exit 1
+fi
+echo "ok zone_layer"
+if grep -E 'tzif\.bend|posix_tz\.bend|posix_at\.bend|format\.bend' "$PKG/zoned.bend"; then
+  echo "e2e-zone: zoned.bend must not import tzif, posix_tz, posix_at, or format" >&2
+  exit 1
+fi
+echo "ok zoned_layer"
+if grep -E 'OffsetDateTime\.(add|sub|add_period)' "$PKG/zoned.bend"; then
+  echo "e2e-zone: zoned.bend must not call OffsetDateTime.add/sub/add_period" >&2
+  exit 1
+fi
+echo "ok zoned_no_odt_add"
+if ! grep -q 'Zone.resolve' "$PKG/zoned.bend"; then
+  echo "e2e-zone: from_local must call Zone.resolve" >&2
+  exit 1
+fi
+echo "ok zoned_resolve"
+if grep -E 'at_offset' "$PKG/zoned.bend"; then
+  echo "e2e-zone: zoned.bend must not call at_offset" >&2
+  exit 1
+fi
+echo "ok zoned_no_at_offset"
+if grep -E 'zoned\.bend|format\.bend' "$PKG/tzif.bend" "$PKG/tzif_hdr.bend"; then
+  echo "e2e-zone: tzif must not import zoned or format" >&2
+  exit 1
+fi
+echo "ok tzif_layer"
+if grep -E 'parse\.bend|tzif\.bend|posix_tz\.bend|posix_at\.bend' "$PKG/zone_format.bend"; then
+  echo "e2e-zone: zone_format.bend must not import parse, tzif, or posix" >&2
+  exit 1
+fi
+echo "ok zone_format_layer"
+if grep -E 'Zone\.resolve' "$PKG/zone_format.bend"; then
+  echo "e2e-zone: zone_format.read must not call Zone.resolve" >&2
+  exit 1
+fi
+echo "ok zone_format_no_resolve"
+
+echo "== JS =="
+expect_line zone_test_js ok "$BEND" "$PKG/tests/zone_test.bend"
+expect_line zoned_test_js ok "$BEND" "$PKG/tests/zoned_test.bend"
+expect_line tzif_test_js ok "$BEND" "$PKG/tests/tzif_test.bend"
+expect_line posix_tz_test_js ok "$BEND" "$PKG/tests/posix_tz_test.bend"
+expect_line zone_format_test_js ok "$BEND" "$PKG/tests/zone_format_test.bend"
+expect_line zoned_readme_js 1789734600 "$BEND" "$PKG/examples/zoned.bend"
+expect_line zone_readme_js "2026-09-18T15:30:00+03:00[Europe/Moscow]" "$BEND" "$PKG/examples/zone.bend"
+
+echo "== compile native / node =="
+"$BEND" "$PKG/tests/zone_test.bend" -o "$TMP/zone_test"
+"$BEND" "$PKG/tests/zone_test.bend" -o "$TMP/zone_test.js"
+"$BEND" "$PKG/tests/zoned_test.bend" -o "$TMP/zoned_test"
+"$BEND" "$PKG/tests/zoned_test.bend" -o "$TMP/zoned_test.js"
+"$BEND" "$PKG/tests/tzif_test.bend" -o "$TMP/tzif_test"
+"$BEND" "$PKG/tests/tzif_test.bend" -o "$TMP/tzif_test.js"
+"$BEND" "$PKG/tests/posix_tz_test.bend" -o "$TMP/posix_tz_test"
+"$BEND" "$PKG/tests/posix_tz_test.bend" -o "$TMP/posix_tz_test.js"
+"$BEND" "$PKG/tests/zone_format_test.bend" -o "$TMP/zone_format_test"
+"$BEND" "$PKG/tests/zone_format_test.bend" -o "$TMP/zone_format_test.js"
+"$BEND" "$PKG/examples/zoned.bend" -o "$TMP/zoned_readme"
+"$BEND" "$PKG/examples/zone.bend" -o "$TMP/zone_readme"
+
+echo "== native =="
+expect_line zone_test_native ok "$TMP/zone_test"
+expect_line zoned_test_native ok "$TMP/zoned_test"
+expect_line tzif_test_native ok "$TMP/tzif_test"
+expect_line posix_tz_test_native ok "$TMP/posix_tz_test"
+expect_line zone_format_test_native ok "$TMP/zone_format_test"
+expect_line zoned_readme_native 1789734600 "$TMP/zoned_readme"
+expect_line zone_readme_native "2026-09-18T15:30:00+03:00[Europe/Moscow]" "$TMP/zone_readme"
+
+echo "== node =="
+expect_line zone_test_node ok node "$TMP/zone_test.js"
+expect_line zoned_test_node ok node "$TMP/zoned_test.js"
+expect_line tzif_test_node ok node "$TMP/tzif_test.js"
+expect_line posix_tz_test_node ok node "$TMP/posix_tz_test.js"
+expect_line zone_format_test_node ok node "$TMP/zone_format_test.js"
+
+echo "time e2e-zone ok"
