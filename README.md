@@ -4,20 +4,22 @@ Proleptic Gregorian dates, UTC instants, elapsed `Duration`, calendar `Period`, 
 
 ## Install
 
+Hub name `bend-time-lib@0.4.0.0` (the name must be ≥12 characters). Same tree as hash `0x9b6a4fc7ceea91864a75396e1b8365e5`.
+
 ```python
-import 0x9b6a4fc7ceea91864a75396e1b8365e5/date.bend as D
-import 0x9b6a4fc7ceea91864a75396e1b8365e5/week.bend as W
-import 0x9b6a4fc7ceea91864a75396e1b8365e5/instant.bend as I
-import 0x9b6a4fc7ceea91864a75396e1b8365e5/duration.bend as Dur
-import 0x9b6a4fc7ceea91864a75396e1b8365e5/period.bend as Per
-import 0x9b6a4fc7ceea91864a75396e1b8365e5/datetime.bend as DT
-import 0x9b6a4fc7ceea91864a75396e1b8365e5/format.bend as F
-import 0x9b6a4fc7ceea91864a75396e1b8365e5/iso8601.bend as Iso
+import bend-time-lib@0.4.0.0/date.bend as D
+import bend-time-lib@0.4.0.0/week.bend as W
+import bend-time-lib@0.4.0.0/instant.bend as I
+import bend-time-lib@0.4.0.0/duration.bend as Dur
+import bend-time-lib@0.4.0.0/period.bend as Per
+import bend-time-lib@0.4.0.0/datetime.bend as DT
+import bend-time-lib@0.4.0.0/format.bend as F
+import bend-time-lib@0.4.0.0/iso8601.bend as Iso
 ```
 
-[date](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/date.bend) · [week](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/week.bend) · [instant](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/instant.bend) · [duration](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/duration.bend) · [period](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/period.bend) · [datetime](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/datetime.bend) · [format](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/format.bend) · [iso8601](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/iso8601.bend) · [manifest](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/manifest)
+[name](https://hub.bend-lang.com/n/bend-time-lib) · [date](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/date.bend) · [week](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/week.bend) · [instant](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/instant.bend) · [duration](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/duration.bend) · [period](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/period.bend) · [datetime](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/datetime.bend) · [format](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/format.bend) · [iso8601](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/iso8601.bend) · [manifest](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/manifest)
 
-This hash is v0.4.0. v0.3.0 was `0x6ce79f1afc193de100ced4c79d7e2350`. `format.bend` and `iso8601.bend` pull [bend-parse](https://github.com/777genius/bend-parse) as `0xe49a3e6521e1b71e55654a885f27bcc1`. From this repo: `import ./date.bend as D`, `import ./week.bend as W`, `import ./iso8601.bend as Iso`.
+This is v0.4.0. v0.3.0 was `0x6ce79f1afc193de100ced4c79d7e2350`. `format.bend` and `iso8601.bend` pull [bend-parse](https://github.com/777genius/bend-parse) as `bend-parse-lib@0.1.0.0`. From this repo: `import ./date.bend as D`, `import ./week.bend as W`, `import ./iso8601.bend as Iso`. The hash still works: `import 0x9b6a4fc7ceea91864a75396e1b8365e5/date.bend as D`.
 
 Zone is a second hash (v0.5.0). Core stays `0x9b6a4fc7ceea91864a75396e1b8365e5`.
 
