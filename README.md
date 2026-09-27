@@ -1,10 +1,10 @@
 # bend-time
 
-Proleptic Gregorian dates, UTC instants, elapsed `Duration`, calendar `Period`, ISO week, `P`/`PT`, an RFC 3339 **subset**, IANA zones from TZif, and RFC 9557 text for [Bend 2](https://github.com/bendlang/bend). No clock. Zone is a second package root (`zone_package.bend`); it is not on the core hub hash.
+Dates, instants, durations, and ISO-8601 text for [Bend 2](https://github.com/bendlang/bend). No clock.
+
+Core (v0.4) is Gregorian `Date`, UTC `Instant`, elapsed `Duration`, calendar `Period`, ISO week, `P`/`PT`, and an RFC 3339 subset. Time zones (v0.5) are a second hub package: IANA from TZif and RFC 9557. They are not on the core hash.
 
 ## Install
-
-Hub name `bend-datetime@0.4.0.0` (names must be ≥12 characters). Same tree as hash `0x9b6a4fc7ceea91864a75396e1b8365e5`. `bend-time-lib@0.4.0.0` is the same package.
 
 ```python
 import bend-datetime@0.4.0.0/date.bend as D
@@ -17,11 +17,23 @@ import bend-datetime@0.4.0.0/format.bend as F
 import bend-datetime@0.4.0.0/iso8601.bend as Iso
 ```
 
-[name](https://hub.bend-lang.com/n/bend-datetime) · [date](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/date.bend) · [week](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/week.bend) · [instant](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/instant.bend) · [duration](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/duration.bend) · [period](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/period.bend) · [datetime](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/datetime.bend) · [format](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/format.bend) · [iso8601](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/iso8601.bend) · [manifest](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/manifest)
+`bend` fetches that from the [hub](https://hub.bend-lang.com/n/bend-datetime). From this repo, same files: `import ./date.bend as D`.
 
-This is v0.4.0. v0.3.0 was `0x6ce79f1afc193de100ced4c79d7e2350`. `format.bend` and `iso8601.bend` pull [bend-parse](https://github.com/777genius/bend-parse) as `bend-scanner@0.1.0.0`. From this repo: `import ./date.bend as D`, `import ./week.bend as W`, `import ./iso8601.bend as Iso`. The hash still works: `import 0x9b6a4fc7ceea91864a75396e1b8365e5/date.bend as D`.
+To pin the exact tree, import the hash instead of the name:
 
-Zone is a second hash (v0.5.0). Core stays `0x9b6a4fc7ceea91864a75396e1b8365e5`.
+```python
+import 0x9b6a4fc7ceea91864a75396e1b8365e5/date.bend as D
+```
+
+[date](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/date.bend) · [week](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/week.bend) · [instant](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/instant.bend) · [duration](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/duration.bend) · [period](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/period.bend) · [datetime](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/datetime.bend) · [format](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/format.bend) · [iso8601](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/iso8601.bend) · [manifest](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/manifest)
+
+`format.bend` and `iso8601.bend` depend on [bend-parse](https://github.com/777genius/bend-parse) (`import bend-scanner@0.1.0.0/parse.bend`).
+
+v0.3.0 was `0x6ce79f1afc193de100ced4c79d7e2350`. The older hub name `bend-time-lib@0.4.0.0` still points at this same core tree.
+
+## Time zones
+
+Not on the core import. Second hash:
 
 ```python
 import 0x5118d7c8d8a6cbdfca48647d1a5a6fde/zone.bend as Z
@@ -32,17 +44,17 @@ import 0x5118d7c8d8a6cbdfca48647d1a5a6fde/zone_format.bend as Zf
 
 [zone](https://hub.bend-lang.com/0x5118d7c8d8a6cbdfca48647d1a5a6fde/zone.bend) · [zoned](https://hub.bend-lang.com/0x5118d7c8d8a6cbdfca48647d1a5a6fde/zoned.bend) · [tzif](https://hub.bend-lang.com/0x5118d7c8d8a6cbdfca48647d1a5a6fde/tzif.bend) · [zone_format](https://hub.bend-lang.com/0x5118d7c8d8a6cbdfca48647d1a5a6fde/zone_format.bend) · [manifest](https://hub.bend-lang.com/0x5118d7c8d8a6cbdfca48647d1a5a6fde/manifest)
 
-`from_tzif` is on `tzif.bend`. Copy: [`examples/zoned.bend`](examples/zoned.bend) prints `1789734600`. [`examples/zone.bend`](examples/zone.bend) prints `2026-09-18T15:30:00+03:00[Europe/Moscow]`.
+`from_tzif` is on `tzif.bend`. [`examples/zoned.bend`](examples/zoned.bend) prints `1789734600`. [`examples/zone.bend`](examples/zone.bend) prints `2026-09-18T15:30:00+03:00[Europe/Moscow]`.
 
 ## v0.5
 
-IANA zones from TZif, POSIX TZ `M`-rules, `ZonedDateTime`, RFC 9557 `[id]`. Gap and fold Fail on `resolve`. `add(Duration)` re-resolves; `add_period` is civil then `from_local`. No registry. No Clock. Core hub hash unchanged.
+IANA zones from TZif, POSIX TZ `M`-rules, `ZonedDateTime`, RFC 9557 `[id]`. `resolve` fails on a DST gap or fold. `add(Duration)` re-resolves; `add_period` moves civil time, then `from_local`. No zone registry. No clock. Core hub hash unchanged.
 
 ## v0.4
 
-Month bounds, `with_*`, weekday movers, `until_days`. `IsoWeek`. `Period.between`. Local/Offset `add_period` (offset kept). `Duration.from_mins` / `to_hms`. Instant trunc. `Iso8601` `P`/`PT` (`PT1H30M`, `P1Y2M`). Not a Span. Not Clock.
+Month bounds, `with_*`, weekday movers, `until_days`, `IsoWeek`, `Period.between`. Local/offset `add_period` keeps the offset. `Duration.from_mins` / `to_hms`. Instant trunc. ISO-8601 `P`/`PT` (`PT1H30M`, `P1Y2M`). Not a Span. Not a clock.
 
-Unix still lives on `Instant`, not `Date`. `from_utc_date` is midnight UTC. Seconds, not millis.
+Unix lives on `Instant`, not `Date`. `from_utc_date` is midnight UTC. Seconds, not millis.
 
 ## Example
 
