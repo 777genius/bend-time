@@ -1,10 +1,15 @@
 # bend-time
 
-Dates, instants, durations, and ISO-8601 text for [Bend 2](https://github.com/bendlang/bend). No clock.
+Dates, instants, durations, and ISO-8601 text for [Bend 2](https://github.com/bendlang/bend). There is no clock.
 
-Core (v0.4) is Gregorian `Date`, UTC `Instant`, elapsed `Duration`, calendar `Period`, ISO week, `P`/`PT`, and an RFC 3339 subset. Time zones (v0.5) are a second hub package: IANA from TZif and RFC 9557. They are not on the core hash.
+Two hub packages:
+
+- **Core** — Gregorian `Date`, UTC `Instant`, elapsed `Duration`, calendar `Period`, ISO week, `P`/`PT`, RFC 3339 subset. Hub name `bend-datetime@0.4.0.0`.
+- **Zones** — IANA from TZif, `ZonedDateTime`, RFC 9557. A second hash. Not on the core import.
 
 ## Install
+
+Named imports need [Bend 2.0.27+](https://bend-lang.com/install.sh). `bend` fetches the files from the hub.
 
 ```python
 import bend-datetime@0.4.0.0/date.bend as D
@@ -17,44 +22,19 @@ import bend-datetime@0.4.0.0/format.bend as F
 import bend-datetime@0.4.0.0/iso8601.bend as Iso
 ```
 
-`bend` fetches that from the [hub](https://hub.bend-lang.com/n/bend-datetime). From this repo, same files: `import ./date.bend as D`.
+From this repo, same files: `import ./date.bend as D`.
 
-To pin the exact tree, import the hash instead of the name:
+To pin the exact tree (same bytes; works without a claimed name):
 
 ```python
 import 0x9b6a4fc7ceea91864a75396e1b8365e5/date.bend as D
 ```
 
-[date](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/date.bend) · [week](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/week.bend) · [instant](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/instant.bend) · [duration](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/duration.bend) · [period](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/period.bend) · [datetime](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/datetime.bend) · [format](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/format.bend) · [iso8601](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/iso8601.bend) · [manifest](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/manifest)
+[hub](https://hub.bend-lang.com/n/bend-datetime) · [date](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/date.bend) · [week](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/week.bend) · [instant](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/instant.bend) · [duration](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/duration.bend) · [period](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/period.bend) · [datetime](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/datetime.bend) · [format](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/format.bend) · [iso8601](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/iso8601.bend) · [manifest](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/manifest)
 
-`format.bend` and `iso8601.bend` depend on [bend-parse](https://github.com/777genius/bend-parse) (`import bend-scanner@0.1.0.0/parse.bend`).
+`format.bend` and `iso8601.bend` fetch [bend-parse](https://github.com/777genius/bend-parse) themselves. You do not import it. `Format.Error` wraps parse failures.
 
-v0.3.0 was `0x6ce79f1afc193de100ced4c79d7e2350`. The older hub name `bend-time-lib@0.4.0.0` still points at this same core tree.
-
-## Time zones
-
-Not on the core import. Second hash:
-
-```python
-import 0x5118d7c8d8a6cbdfca48647d1a5a6fde/zone.bend as Z
-import 0x5118d7c8d8a6cbdfca48647d1a5a6fde/zoned.bend as Zd
-import 0x5118d7c8d8a6cbdfca48647d1a5a6fde/tzif.bend as Tf
-import 0x5118d7c8d8a6cbdfca48647d1a5a6fde/zone_format.bend as Zf
-```
-
-[zone](https://hub.bend-lang.com/0x5118d7c8d8a6cbdfca48647d1a5a6fde/zone.bend) · [zoned](https://hub.bend-lang.com/0x5118d7c8d8a6cbdfca48647d1a5a6fde/zoned.bend) · [tzif](https://hub.bend-lang.com/0x5118d7c8d8a6cbdfca48647d1a5a6fde/tzif.bend) · [zone_format](https://hub.bend-lang.com/0x5118d7c8d8a6cbdfca48647d1a5a6fde/zone_format.bend) · [manifest](https://hub.bend-lang.com/0x5118d7c8d8a6cbdfca48647d1a5a6fde/manifest)
-
-`from_tzif` is on `tzif.bend`. [`examples/zoned.bend`](examples/zoned.bend) prints `1789734600`. [`examples/zone.bend`](examples/zone.bend) prints `2026-09-18T15:30:00+03:00[Europe/Moscow]`.
-
-## v0.5
-
-IANA zones from TZif, POSIX TZ `M`-rules, `ZonedDateTime`, RFC 9557 `[id]`. `resolve` fails on a DST gap or fold. `add(Duration)` re-resolves; `add_period` moves civil time, then `from_local`. No zone registry. No clock. Core hub hash unchanged.
-
-## v0.4
-
-Month bounds, `with_*`, weekday movers, `until_days`, `IsoWeek`, `Period.between`. Local/offset `add_period` keeps the offset. `Duration.from_mins` / `to_hms`. Instant trunc. ISO-8601 `P`/`PT` (`PT1H30M`, `P1Y2M`). Not a Span. Not a clock.
-
-Unix lives on `Instant`, not `Date`. `from_utc_date` is midnight UTC. Seconds, not millis.
+`bend-time-lib@0.4.0.0` is an older name for this same core tree. v0.3.0 was `0x6ce79f1afc193de100ced4c79d7e2350`.
 
 ## Example
 
@@ -79,9 +59,47 @@ def main() -> IO(Unit):
   )
 ```
 
-Prints `2026-09-18T12:30:00Z`. Copy: [`examples/readme.bend`](examples/readme.bend). Last day of February: [`examples/month.bend`](examples/month.bend) prints `28`. `PT1H30M`: [`examples/iso8601.bend`](examples/iso8601.bend). Unix midnight UTC: [`examples/unix.bend`](examples/unix.bend) prints `1789689600`.
+Prints `2026-09-18T12:30:00Z`. The helper is required: Bend cannot `match` a computed `Result`. Copy: [`examples/readme.bend`](examples/readme.bend).
+
+| Example | Prints |
+|---|---|
+| [`examples/month.bend`](examples/month.bend) | `28` (last day of February 2026) |
+| [`examples/iso8601.bend`](examples/iso8601.bend) | `PT1H30M` |
+| [`examples/unix.bend`](examples/unix.bend) | `1789689600` (midnight UTC, 2026-09-18) |
+| [`examples/zoned.bend`](examples/zoned.bend) | `1789734600` |
+| [`examples/zone.bend`](examples/zone.bend) | `2026-09-18T15:30:00+03:00[Europe/Moscow]` |
+
+## Modules
+
+| File | What |
+|---|---|
+| `date.bend` | Civil `Date`, weekdays, month/year bounds |
+| `week.bend` | ISO week |
+| `instant.bend` | UTC `Instant`, unix seconds |
+| `duration.bend` | Elapsed `Duration` (not a calendar period) |
+| `period.bend` | Calendar `Period` (years/months/days) |
+| `datetime.bend` | `TimeOfDay`, `UtcOffset`, `LocalDateTime`, `OffsetDateTime` |
+| `format.bend` | RFC 3339 subset (`read` / `show`) |
+| `iso8601.bend` | `P` / `PT` (`P1Y2M`, `PT1H30M`) |
+
+## Time zones
+
+Not on the core import. Second hash (`0x5118d7c8d8a6cbdfca48647d1a5a6fde`):
+
+```python
+import 0x5118d7c8d8a6cbdfca48647d1a5a6fde/zone.bend as Z
+import 0x5118d7c8d8a6cbdfca48647d1a5a6fde/zoned.bend as Zd
+import 0x5118d7c8d8a6cbdfca48647d1a5a6fde/tzif.bend as Tf
+import 0x5118d7c8d8a6cbdfca48647d1a5a6fde/zone_format.bend as Zf
+```
+
+[zone](https://hub.bend-lang.com/0x5118d7c8d8a6cbdfca48647d1a5a6fde/zone.bend) · [zoned](https://hub.bend-lang.com/0x5118d7c8d8a6cbdfca48647d1a5a6fde/zoned.bend) · [tzif](https://hub.bend-lang.com/0x5118d7c8d8a6cbdfca48647d1a5a6fde/tzif.bend) · [zone_format](https://hub.bend-lang.com/0x5118d7c8d8a6cbdfca48647d1a5a6fde/zone_format.bend) · [manifest](https://hub.bend-lang.com/0x5118d7c8d8a6cbdfca48647d1a5a6fde/manifest)
+
+`Zone.from_tzif` is on `tzif.bend`. There is no IANA registry: you pass TZif bytes. `read` takes a caller-supplied `Zone`.
 
 ## API
+
+### Core
 
 ```text
 Date.from(year, month, day) -> Result<Date, Date.Error>
@@ -145,7 +163,11 @@ Format.read_instant / show_instant
 
 Iso8601.show_duration / read_duration
 Iso8601.show_period / read_period
+```
 
+### Zones
+
+```text
 Zone.fixed(offset) -> Zone
 Zone.id(z) -> String
 Zone.at(z, instant) -> Result<UtcOffset, Zone.Error>
@@ -165,26 +187,28 @@ ZoneFormat.show(zdt) -> Result<String, ZoneFormat.Error>
 ZoneFormat.read(text, zone) -> Result<ZonedDateTime, ZoneFormat.Error>
 ```
 
-- Years `1..9999`. Invalid civil dates fail. `with_*` is strict (`Date.from`); month clamp is `Period.add_to` only (`2026-01-31` + 1 month → `2026-02-28`).
-- Unix is Instant, UTC, `U32`, 1970-01-01 through 2106-02-07. Year 1 is a valid Instant, not a valid unix second. `to_unix` drops nanos.
-- `Duration` is non-negative elapsed time. `from_secs` is total. `to_hms` can Fail (hours overflow). ISO show uses stored days (`P1D`, not `PT24H`). `PT90M` is `from_mins(90)`, not `from_hms`.
-- `Instant.until` / `Date.until_days` / `Period.between` fail if the end is before the start.
-- `OffsetDateTime.add(Duration)` moves the timeline. `add_period` keeps the wall and the offset. They do not share a path.
-- `Weekday` is Mon..Sun. `1970-01-01` is Thursday. `0001-01-01` is Monday.
-- RFC 3339: offset required. `Z` and `+00:00` are 0; `show` emits `Z`; `-00:00` fails. No `:60`, no `24:00:00`, no space instead of `T`, at most 9 fraction digits.
-- `Iso8601` duration is `P[nD]T[nH][nM][nS]`. Period is `P[nY][nM][nW][nD]` (`W` = 7 days). `P1Y` as Duration fails. Mixed `P1YT1H` fails both. Trailing space is `Extra`. `read(show(x))` keeps the value, not the spelling.
-- `Zone` is Fixed or IANA rules. `from_local` is strict `resolve` (gap and fold Fail). `add(Duration)` re-resolves the Instant; `add_period` moves civil time then `from_local`. They do not share a path and do not call `OffsetDateTime.add`.
-- RFC 9557 `show`/`read` split on `[` first. `read` takes a caller-supplied `Zone`; there is no registry. Offset in the text must match `Zone.at`. Fold is the offset, not `resolve`.
+## Notes
 
-`Format.Error` wraps parse failures. A format consumer does not import parse.
+- Years are `1..9999`. Invalid civil dates fail. `with_*` is strict (`Date.from`). Month clamp is `Period.add_to` only: `2026-01-31` + 1 month → `2026-02-28`.
+- Unix is on `Instant`, not `Date`. UTC, `U32`, 1970-01-01 through 2106-02-07. Year 1 is a valid Instant, not a valid unix second. `from_utc_date` is midnight UTC. `to_unix` drops nanos.
+- `Duration` is non-negative elapsed time. `from_secs` is a total. `to_hms` can fail (hours overflow). ISO show uses stored days (`P1D`, not `PT24H`). `PT90M` is `from_mins(90)`, not `from_hms`.
+- `Instant.until`, `Date.until_days`, and `Period.between` fail if the end is before the start.
+- `OffsetDateTime.add(Duration)` moves the timeline. `add_period` keeps the wall clock and the offset. They do not share a path.
+- `Weekday` is Mon..Sun. `1970-01-01` is Thursday. `0001-01-01` is Monday.
+- RFC 3339: offset required. `Z` and `+00:00` are 0; `show` emits `Z`; `-00:00` fails. No leap second `:60`, no `24:00:00`, no space instead of `T`, at most 9 fraction digits.
+- ISO duration is `P[nD]T[nH][nM][nS]`. Period is `P[nY][nM][nW][nD]` (`W` = 7 days). `P1Y` as Duration fails. Mixed `P1YT1H` fails both. Trailing space is `Extra`. `read(show(x))` keeps the value, not the spelling.
+- `Zone` is Fixed or IANA rules. `from_local` is strict `resolve` (DST gap and fold fail). `add(Duration)` re-resolves the Instant; `add_period` moves civil time, then `from_local`. They do not share a path and do not call `OffsetDateTime.add`.
+- RFC 9557 `show`/`read` split on `[` first. Offset in the text must match `Zone.at`. A fold is the offset, not `resolve`.
 
 ## Proofs
 
-Closed date/leap/`Z`/epoch laws are **proved**. `Zone.at(fixed(Z), unix 0)` is **proved** in `ZONE_PROOF.bend` (`./tools/gate-zone`). Calendar movers, DST gap/fold, Moscow 15:30, and RFC 9557 are **tested**. Table: [docs/proof-status.md](docs/proof-status.md).
+Closed date / leap / `Z` / epoch laws are **proved**. `Zone.at(fixed(Z), unix 0)` is **proved** in `ZONE_PROOF.bend` (`./tools/gate-zone`). Calendar movers, DST gap/fold, Moscow 15:30, and RFC 9557 are **tested**. Table: [docs/proof-status.md](docs/proof-status.md).
 
 ## Check
 
-Bend **2.0.5** (`0b7e2b11`), bun 1.3.11, clang 14+. Pin: [docs/compatibility.md](docs/compatibility.md).
+This checkout is gated on Bend **2.0.5** (`0b7e2b11`) via `./tools/bend`. Pin: [docs/compatibility.md](docs/compatibility.md). bun 1.3.11, clang 14+.
+
+Named hub imports (`bend-datetime@…`) need Bend **2.0.27+**. The hash import and `./date.bend` work on the pin.
 
 ```sh
 ./tools/e2e
