@@ -28,8 +28,8 @@ For local verification with an already verified Bend binary, use
 `BEND_COMPAT=/absolute/path/to/bend ./tools/check-compatibility` instead.
 Neither mode downloads a compiler or selects the legacy wrapper automatically.
 It checks `date`, `datetime`, `duration`, `format`, `instant`, `iso8601`,
-`package`, `period`, and `week` with `--check-only`, requiring the
-`ALL PROOFS CHECK` success marker as well as a zero exit status.
+`package`, `period`, and `week` with `--check-only`, requiring an exact
+`All terms check.` or `ALL PROOFS CHECK` success line as well as a zero exit status.
 It also runs the existing `tests/date_test.bend` and requires an exact `ok` line,
 covering leap-year behavior including 1900 and 2000.
 

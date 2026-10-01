@@ -28,9 +28,9 @@ for module in date datetime duration format instant iso8601 package period week;
     exit 1
   }
   # Bend can exit zero on a check failure; require its success marker too.
-  printf '%s\n' "$output" | grep -Fq 'ALL PROOFS CHECK' || {
+  printf '%s\n' "$output" | grep -Fxq -e 'All terms check.' -e 'ALL PROOFS CHECK' || {
     printf '%s\n' "$output" >&2
-    echo "check-compatibility: $module missing ALL PROOFS CHECK" >&2
+    echo "check-compatibility: $module missing exact check success line" >&2
     exit 1
   }
   echo "ok $module check"
