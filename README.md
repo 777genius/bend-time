@@ -9,6 +9,8 @@ Two hub packages:
 
 ## Install
 
+The published core `0.4.0.0` below does not load on Bend 2.0.28 or newer because it contains invalid helper names. The core sources in this checkout contain the fix and are checked on Bend 2.0.28 and 2.0.34; use relative imports from a checkout until a new Hub version is published. Zone imports still depend on the old core hash. See [compatibility](docs/compatibility.md) and [issue #1](https://github.com/777genius/bend-time/issues/1).
+
 Named imports need [Bend 2.0.27+](https://bend-lang.com/install.sh). `bend` fetches the files from the hub.
 
 ```python

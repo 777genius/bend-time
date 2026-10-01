@@ -7,22 +7,22 @@ type Date.Error is Data:
 type Date is Data:
   Date{year: U32, month: U32, day: U32}
 
-def Date.leap.100(+y: U32, d100: Bool) -> Bool:
+def Date.leap100(+y: U32, d100: Bool) -> Bool:
   match d100:
     case False{}:
       True{}
     case True{}:
       U32.is_eq(U32.mod(y, 400), 0)
 
-def Date.leap.4(+y: U32, d4: Bool) -> Bool:
+def Date.leap4(+y: U32, d4: Bool) -> Bool:
   match d4:
     case False{}:
       False{}
     case True{}:
-      Date.leap.100(y, U32.is_eq(U32.mod(y, 100), 0))
+      Date.leap100(y, U32.is_eq(U32.mod(y, 100), 0))
 
 def Date.leap(+y: U32) -> Bool:
-  Date.leap.4(y, U32.is_eq(U32.mod(y, 4), 0))
+  Date.leap4(y, U32.is_eq(U32.mod(y, 4), 0))
 
 def Date.dim.feb(leap: Bool) -> U32:
   match leap:

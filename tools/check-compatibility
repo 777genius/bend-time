@@ -1,0 +1,49 @@
+#!/bin/sh
+# Core source compatibility with an explicitly selected Bend checkout.
+set -eu
+
+ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+if [ -n "${BEND_COMPAT:-}" ]; then
+  if [ ! -x "$BEND_COMPAT" ]; then
+    echo "check-compatibility: BEND_COMPAT must name an executable Bend binary" >&2
+    exit 1
+  fi
+elif [ -z "${BEND_HOME:-}" ] || [ ! -f "$BEND_HOME/bend2/main.ts" ]; then
+  echo "check-compatibility: set BEND_HOME to a Bend source checkout with bend2/main.ts" >&2
+  exit 1
+fi
+
+run_bend() {
+  if [ -n "${BEND_COMPAT:-}" ]; then
+    "$BEND_COMPAT" "$@"
+  else
+    bun "$BEND_HOME/bend2/main.ts" "$@"
+  fi
+}
+
+for module in date datetime duration format instant iso8601 package period week; do
+  output=$(run_bend "$ROOT/$module.bend" --check-only 2>&1) || {
+    printf '%s\n' "$output" >&2
+    echo "check-compatibility: $module check failed" >&2
+    exit 1
+  }
+  # Bend can exit zero on a check failure; require its success marker too.
+  printf '%s\n' "$output" | grep -Fq 'ALL PROOFS CHECK' || {
+    printf '%s\n' "$output" >&2
+    echo "check-compatibility: $module missing ALL PROOFS CHECK" >&2
+    exit 1
+  }
+  echo "ok $module check"
+done
+
+output=$(run_bend "$ROOT/tests/date_test.bend" 2>&1) || {
+  printf '%s\n' "$output" >&2
+  echo "check-compatibility: date_test failed" >&2
+  exit 1
+}
+printf '%s\n' "$output" | grep -Fqx 'ok' || {
+  printf '%s\n' "$output" >&2
+  echo "check-compatibility: date_test missing exact ok line" >&2
+  exit 1
+}
+echo "ok date_test"
