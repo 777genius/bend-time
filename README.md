@@ -4,24 +4,24 @@ Dates, instants, durations, and ISO-8601 text for [Bend 2](https://github.com/be
 
 Two hub packages:
 
-- **Core** — Gregorian `Date`, UTC `Instant`, elapsed `Duration`, calendar `Period`, ISO week, `P`/`PT`, RFC 3339 subset. Hub name `bend-datetime@0.4.0.0`.
+- **Core** — Gregorian `Date`, UTC `Instant`, elapsed `Duration`, calendar `Period`, ISO week, `P`/`PT`, RFC 3339 subset. Hub name `bend-datetime@0.4.0.1`.
 - **Zones** — IANA from TZif, `ZonedDateTime`, RFC 9557. A second hash. Not on the core import.
 
 ## Install
 
-The published core `0.4.0.0` below does not load on Bend 2.0.28 or newer because it contains invalid helper names. The core sources in this checkout contain the fix and are checked on Bend 2.0.28 and 2.0.34; use relative imports from a checkout until a new Hub version is published. Zone imports still depend on the old core hash. See [compatibility](docs/compatibility.md) and [issue #1](https://github.com/777genius/bend-time/issues/1).
+Core `0.4.0.1` fixes loading on Bend 2.0.28 and newer; the core sources are checked on Bend 2.0.28 and 2.0.34. Upgrade from `0.4.0.0`, whose immutable Hub tree contains invalid helper names. Zone imports still depend on the old core hash and are outside these compatibility checks. See [compatibility](docs/compatibility.md) and [issue #1](https://github.com/777genius/bend-time/issues/1).
 
 Named imports need [Bend 2.0.27+](https://bend-lang.com/install.sh). `bend` fetches the files from the hub.
 
 ```python
-import bend-datetime@0.4.0.0/date.bend as D
-import bend-datetime@0.4.0.0/week.bend as W
-import bend-datetime@0.4.0.0/instant.bend as I
-import bend-datetime@0.4.0.0/duration.bend as Dur
-import bend-datetime@0.4.0.0/period.bend as Per
-import bend-datetime@0.4.0.0/datetime.bend as DT
-import bend-datetime@0.4.0.0/format.bend as F
-import bend-datetime@0.4.0.0/iso8601.bend as Iso
+import bend-datetime@0.4.0.1/date.bend as D
+import bend-datetime@0.4.0.1/week.bend as W
+import bend-datetime@0.4.0.1/instant.bend as I
+import bend-datetime@0.4.0.1/duration.bend as Dur
+import bend-datetime@0.4.0.1/period.bend as Per
+import bend-datetime@0.4.0.1/datetime.bend as DT
+import bend-datetime@0.4.0.1/format.bend as F
+import bend-datetime@0.4.0.1/iso8601.bend as Iso
 ```
 
 From this repo, same files: `import ./date.bend as D`.
@@ -29,14 +29,14 @@ From this repo, same files: `import ./date.bend as D`.
 To pin the exact tree (same bytes; works without a claimed name):
 
 ```python
-import 0x9b6a4fc7ceea91864a75396e1b8365e5/date.bend as D
+import 0x5d092e40b48ee431bc4b160e8797f9d5/date.bend as D
 ```
 
-[hub](https://hub.bend-lang.com/n/bend-datetime) · [date](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/date.bend) · [week](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/week.bend) · [instant](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/instant.bend) · [duration](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/duration.bend) · [period](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/period.bend) · [datetime](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/datetime.bend) · [format](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/format.bend) · [iso8601](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/iso8601.bend) · [manifest](https://hub.bend-lang.com/0x9b6a4fc7ceea91864a75396e1b8365e5/manifest)
+[hub](https://hub.bend-lang.com/n/bend-datetime) · [date](https://hub.bend-lang.com/0x5d092e40b48ee431bc4b160e8797f9d5/date.bend) · [week](https://hub.bend-lang.com/0x5d092e40b48ee431bc4b160e8797f9d5/week.bend) · [instant](https://hub.bend-lang.com/0x5d092e40b48ee431bc4b160e8797f9d5/instant.bend) · [duration](https://hub.bend-lang.com/0x5d092e40b48ee431bc4b160e8797f9d5/duration.bend) · [period](https://hub.bend-lang.com/0x5d092e40b48ee431bc4b160e8797f9d5/period.bend) · [datetime](https://hub.bend-lang.com/0x5d092e40b48ee431bc4b160e8797f9d5/datetime.bend) · [format](https://hub.bend-lang.com/0x5d092e40b48ee431bc4b160e8797f9d5/format.bend) · [iso8601](https://hub.bend-lang.com/0x5d092e40b48ee431bc4b160e8797f9d5/iso8601.bend) · [manifest](https://hub.bend-lang.com/0x5d092e40b48ee431bc4b160e8797f9d5/manifest)
 
 `format.bend` and `iso8601.bend` fetch [bend-parse](https://github.com/777genius/bend-parse) themselves. You do not import it. `Format.Error` wraps parse failures.
 
-`bend-time-lib@0.4.0.0` is an older name for this same core tree. v0.3.0 was `0x6ce79f1afc193de100ced4c79d7e2350`.
+`bend-time-lib@0.4.0.1` is an alias for this same core tree. Both names still have the older `0.4.0.0` version at `0x9b6a4fc7ceea91864a75396e1b8365e5`. v0.3.0 was `0x6ce79f1afc193de100ced4c79d7e2350`.
 
 ## Example
 

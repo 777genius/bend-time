@@ -39,7 +39,13 @@ establish zone compatibility with these Bend versions.
 
 ## Hub publication
 
-The published `bend-datetime@0.4.0.0` and `bend-time-lib@0.4.0.0` core tree is
+The fixed core is published as `bend-datetime@0.4.0.1` and
+`bend-time-lib@0.4.0.1`, both pointing to
+`0x5d092e40b48ee431bc4b160e8797f9d5`. The ten-file Hub manifest, including
+`LICENSE`, matches this checkout byte for byte. Named package imports and the
+existing date regression tests were also checked from Hub on Bend 2.0.34.
+
+The older `0.4.0.0` core tree at `0x9b6a4fc7ceea91864a75396e1b8365e5` is
 immutable. Its `Date.leap.100` and `Date.leap.4` names remain invalid on Bend
-2.0.28 and newer. This source fix does not repair those Hub imports; users need
-a new publication containing the renamed helpers, or this fixed checkout.
+2.0.28 and newer; upgrade to `0.4.0.1` or use this fixed checkout. The zone
+package still imports that old core hash and is not repaired by this release.
