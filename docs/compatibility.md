@@ -21,6 +21,7 @@ The independent CI compatibility matrix checks these Bend source versions with b
 |---|---|
 | 2.0.28 | `bc178404f4778704fa5584a73fcdf72bcdf9f32c` |
 | 2.0.34 | `7d8a3eb036042c6549461054d25a10f26d361c5c` |
+| 2.0.36 | `ae1101ca7d15364f9274fa6b1367d175884a7da7` |
 
 Run `BEND_HOME=/path/to/bend-checkout ./tools/check-compatibility`.
 The checkout must contain `bend2/main.ts`; this script invokes bun directly.
@@ -30,8 +31,10 @@ Neither mode downloads a compiler or selects the legacy wrapper automatically.
 It checks `date`, `datetime`, `duration`, `format`, `instant`, `iso8601`,
 `package`, `period`, and `week` with `--check-only`, requiring an exact
 `All terms check.` or `ALL PROOFS CHECK` success line as well as a zero exit status.
-It also runs the existing `tests/date_test.bend` and requires an exact `ok` line,
-covering leap-year behavior including 1900 and 2000.
+It also runs all eight existing core regression suites and requires an exact
+`ok` line from each: date, duration, period, instant, local datetime, format,
+ISO week, and ISO-8601. These cover leap-year behavior including 1900 and 2000,
+calendar arithmetic, elapsed time, offsets, and text parsing/formatting.
 
 Compatibility here applies to the core sources in this checkout. The separate
 zone sources import the older core hash and are outside this matrix; it does not

@@ -16,6 +16,8 @@ jobs:
             sha: bc178404f4778704fa5584a73fcdf72bcdf9f32c
           - version: "2.0.34"
             sha: 7d8a3eb036042c6549461054d25a10f26d361c5c
+          - version: "2.0.36"
+            sha: ae1101ca7d15364f9274fa6b1367d175884a7da7
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -26,7 +28,7 @@ jobs:
           repository: bendlang/bend
           ref: ${{ matrix.bend.sha }}
           path: .toolchain/compatibility
-      - name: core checks and date regression
+      - name: core checks and regression tests
         env:
           BEND_HOME: ${{ github.workspace }}/.toolchain/compatibility
         run: ./tools/check-compatibility
