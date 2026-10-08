@@ -45,8 +45,11 @@ establish zone compatibility with these Bend versions.
 The fixed core is published as `bend-datetime@0.4.0.1` and
 `bend-time-lib@0.4.0.1`, both pointing to
 `0x5d092e40b48ee431bc4b160e8797f9d5`. The ten-file Hub manifest, including
-`LICENSE`, matches this checkout byte for byte. Named package imports and the
-existing date regression tests were also checked from Hub on Bend 2.0.34.
+`LICENSE`, matches the `0.4.0.1` release sources byte for byte. The repository
+checkout now also adds `Date.quarter`, `Date.start_of_quarter`, and
+`Date.end_of_quarter`; these helpers are not published in that immutable Hub
+tree. Named package imports and the existing date regression tests were also
+checked from Hub on Bend 2.0.34.
 
 The older `0.4.0.0` core tree at `0x9b6a4fc7ceea91864a75396e1b8365e5` is
 immutable. Its `Date.leap.100` and `Date.leap.4` names remain invalid on Bend

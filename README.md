@@ -24,9 +24,12 @@ import bend-datetime@0.4.0.1/format.bend as F
 import bend-datetime@0.4.0.1/iso8601.bend as Iso
 ```
 
-From this repo, same files: `import ./date.bend as D`.
+From this repo, use local imports: `import ./date.bend as D`.
 
-To pin the exact tree (same bytes; works without a claimed name):
+Calendar quarter helpers are available from the repository checkout only; they
+are not included in the immutable `0.4.0.1` Hub tree shown above.
+
+To pin the exact published tree (works without a claimed name):
 
 ```python
 import 0x5d092e40b48ee431bc4b160e8797f9d5/date.bend as D
@@ -166,6 +169,23 @@ Format.read_instant / show_instant
 Iso8601.show_duration / read_duration
 Iso8601.show_period / read_period
 ```
+
+Calendar quarters (repository checkout only):
+
+```text
+Date.quarter(date) -> U32
+Date.start_of_quarter(date) -> Date
+Date.end_of_quarter(date) -> Result<Date, Date.Error>
+```
+
+These helpers take a valid Gregorian `Date`, as constructed by `Date.from`.
+Quarters are numbered 1 through 4 (January-March, April-June, July-September,
+October-December). Bounds stay in the same year; for example, `2000-02-29`
+starts at `2000-01-01` and ends at `2000-03-31`, and `9999-12-31` ends at
+`9999-12-31`. `start_of_quarter` returns a `Date` directly, like
+`start_of_month`; `end_of_quarter` uses the existing `end_of_month` result.
+`tests/date_test.bend` covers all twelve months, quarter bounds, century leap
+years 1900/2000, and years 1/9999 through the existing compatibility checks.
 
 ### Zones
 
