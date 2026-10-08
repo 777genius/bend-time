@@ -26,8 +26,9 @@ import bend-datetime@0.4.0.1/iso8601.bend as Iso
 
 From this repo, use local imports: `import ./date.bend as D`.
 
-Calendar quarter helpers are available from the repository checkout only; they
-are not included in the immutable `0.4.0.1` Hub tree shown above.
+Calendar quarter helpers and `Date.day_of_year` are available from the repository
+checkout only; they are not included in the immutable `0.4.0.1` Hub tree shown
+above.
 
 To pin the exact published tree (works without a claimed name):
 
@@ -186,6 +187,20 @@ starts at `2000-01-01` and ends at `2000-03-31`, and `9999-12-31` ends at
 `start_of_month`; `end_of_quarter` uses the existing `end_of_month` result.
 `tests/date_test.bend` covers all twelve months, quarter bounds, century leap
 years 1900/2000, and years 1/9999 through the existing compatibility checks.
+
+Day of year (repository checkout only):
+
+```text
+Date.day_of_year(date) -> U32
+```
+
+For a valid Gregorian `Date` from `Date.from`, this returns a one-based ordinal
+in `1..366`: January 1 is 1, February 29 is 60, and December 31 is 365 in a
+common year or 366 in a leap year. For example,
+`D.Date.day_of_year(D.Date{2000, 3, 1})` returns 61; in 1900 it returns 60.
+Directly constructed invalid dates are outside this helper's contract.
+The date regression suite covers month transitions, the 1900/2000 leap rule,
+and January 1/December 31 in years 1/9999.
 
 ### Zones
 
