@@ -131,6 +131,9 @@ def DateTest.end_garb(
 ) -> IO(Unit):
   DateTest.ymd(name, r, y, m, d)
 
+def DateTest.quarter(name: String, date: D.Date, want: U32) -> IO(Unit):
+  DateTest.ok(name, U32.is_eq(D.Date.quarter(date), want))
+
 def main() -> IO(Unit):
   do IO<Unit>:
     Unit <- DateTest.ymd("d2026", D.Date.from(2026, 9, 18), 2026, 9, 18)
@@ -161,6 +164,67 @@ def main() -> IO(Unit):
     )
     Unit <- DateTest.end_garb(
       "eom_apr", D.Date.end_of_month(D.Date{2026, 4, 31}), 2026, 4, 30
+    )
+    Unit <- DateTest.quarter("q_jan", D.Date{2026, 1, 1}, 1)
+    Unit <- DateTest.quarter("q_feb", D.Date{2026, 2, 28}, 1)
+    Unit <- DateTest.quarter("q_mar", D.Date{2026, 3, 31}, 1)
+    Unit <- DateTest.quarter("q_apr", D.Date{2026, 4, 1}, 2)
+    Unit <- DateTest.quarter("q_may", D.Date{2026, 5, 31}, 2)
+    Unit <- DateTest.quarter("q_jun", D.Date{2026, 6, 30}, 2)
+    Unit <- DateTest.quarter("q_jul", D.Date{2026, 7, 1}, 3)
+    Unit <- DateTest.quarter("q_aug", D.Date{2026, 8, 31}, 3)
+    Unit <- DateTest.quarter("q_sep", D.Date{2026, 9, 30}, 3)
+    Unit <- DateTest.quarter("q_oct", D.Date{2026, 10, 1}, 4)
+    Unit <- DateTest.quarter("q_nov", D.Date{2026, 11, 30}, 4)
+    Unit <- DateTest.quarter("q_dec", D.Date{2026, 12, 31}, 4)
+    Unit <- DateTest.total(
+      "soq_1", D.Date.start_of_quarter(D.Date{2026, 3, 31}), 2026, 1, 1
+    )
+    Unit <- DateTest.total(
+      "soq_2", D.Date.start_of_quarter(D.Date{2026, 4, 1}), 2026, 4, 1
+    )
+    Unit <- DateTest.total(
+      "soq_3", D.Date.start_of_quarter(D.Date{2026, 8, 31}), 2026, 7, 1
+    )
+    Unit <- DateTest.total(
+      "soq_4", D.Date.start_of_quarter(D.Date{2026, 12, 31}), 2026, 10, 1
+    )
+    Unit <- DateTest.ymd(
+      "eoq_1", D.Date.end_of_quarter(D.Date{2026, 1, 1}), 2026, 3, 31
+    )
+    Unit <- DateTest.ymd(
+      "eoq_2", D.Date.end_of_quarter(D.Date{2026, 6, 30}), 2026, 6, 30
+    )
+    Unit <- DateTest.ymd(
+      "eoq_3", D.Date.end_of_quarter(D.Date{2026, 7, 1}), 2026, 9, 30
+    )
+    Unit <- DateTest.ymd(
+      "eoq_4", D.Date.end_of_quarter(D.Date{2026, 10, 1}), 2026, 12, 31
+    )
+    Unit <- DateTest.total(
+      "soq_1900", D.Date.start_of_quarter(D.Date{1900, 2, 28}), 1900, 1, 1
+    )
+    Unit <- DateTest.ymd(
+      "eoq_1900", D.Date.end_of_quarter(D.Date{1900, 2, 28}), 1900, 3, 31
+    )
+    Unit <- DateTest.total(
+      "soq_2000", D.Date.start_of_quarter(D.Date{2000, 2, 29}), 2000, 1, 1
+    )
+    Unit <- DateTest.ymd(
+      "eoq_2000", D.Date.end_of_quarter(D.Date{2000, 2, 29}), 2000, 3, 31
+    )
+    Unit <- DateTest.total(
+      "soq_1ad", D.Date.start_of_quarter(D.Date{1, 1, 1}), 1, 1, 1
+    )
+    Unit <- DateTest.ymd(
+      "eoq_1ad", D.Date.end_of_quarter(D.Date{1, 1, 1}), 1, 3, 31
+    )
+    Unit <- DateTest.quarter("q_9999", D.Date{9999, 12, 31}, 4)
+    Unit <- DateTest.total(
+      "soq_9999", D.Date.start_of_quarter(D.Date{9999, 12, 31}), 9999, 10, 1
+    )
+    Unit <- DateTest.ymd(
+      "eoq_9999", D.Date.end_of_quarter(D.Date{9999, 12, 31}), 9999, 12, 31
     )
     Unit <- DateTest.total("soy", D.Date.start_of_year(D.Date{2026, 9, 18}), 2026, 1, 1)
     Unit <- DateTest.total("eoy", D.Date.end_of_year(D.Date{2026, 9, 18}), 2026, 12, 31)

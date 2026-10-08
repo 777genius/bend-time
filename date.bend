@@ -155,6 +155,24 @@ def Date.start_of_month(date: Date) -> Date:
     case Date{y, m, _}:
       Date{y, m, 1}
 
+def Date.quarter.month(m: U32) -> U32:
+  U32.add(U32.div(U32.sub(m, 1), 3), 1)
+
+def Date.quarter(date: Date) -> U32:
+  match date:
+    case Date{_, m, _}:
+      Date.quarter.month(m)
+
+def Date.start_of_quarter(date: Date) -> Date:
+  match date:
+    case Date{y, m, _}:
+      Date{y, U32.add(U32.mul(U32.sub(Date.quarter.month(m), 1), 3), 1), 1}
+
+def Date.end_of_quarter(date: Date) -> Result<&2, &2, Date.Error, Date>:
+  match date:
+    case Date{y, m, _}:
+      Date.end_of_month(Date{y, U32.mul(Date.quarter.month(m), 3), 1})
+
 def Date.start_of_year(date: Date) -> Date:
   match date:
     case Date{y, _, _}:

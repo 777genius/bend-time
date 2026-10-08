@@ -21,6 +21,7 @@ Unix is an Instant view, not a Date method.
 | `to_hms(zero) = Hms{0,0,0}` | proved | |
 | `to_unix(from_utc_date(2026-09-18)) = 1789689600` | tested | Instant |
 | add/sub days, 1-01-01 / 9999-12-31 roundtrip | tested | |
+| quarter number and bounds | tested | valid Date, all 12 months; years 1/1900/2000/9999 |
 | `1900-01-01` unix / year 1 Instant ≠ unix | tested | |
 | Instant add/until/is_lt; Date.is_lt | tested | |
 | `from_instant` +03:00 / −01:00; `at_offset` | tested | |
