@@ -9,7 +9,7 @@ Two hub packages:
 
 ## Install
 
-Core `0.4.0.1` fixes loading on Bend 2.0.28 and newer; the core sources are checked on Bend 2.0.28 and 2.0.34. Upgrade from `0.4.0.0`, whose immutable Hub tree contains invalid helper names. Zone imports still depend on the old core hash and are outside these compatibility checks. See [compatibility](docs/compatibility.md) and [issue #1](https://github.com/777genius/bend-time/issues/1).
+Core `0.4.0.1` fixes loading on Bend 2.0.28 and newer; the core sources are checked on Bend 2.0.28, 2.0.34, and 2.0.36. Upgrade from `0.4.0.0`, whose immutable Hub tree contains invalid helper names. Zone imports still depend on the old core hash and are outside these compatibility checks. See [compatibility](docs/compatibility.md) and [issue #1](https://github.com/777genius/bend-time/issues/1).
 
 Named imports need [Bend 2.0.27+](https://bend-lang.com/install.sh). `bend` fetches the files from the hub.
 
@@ -207,6 +207,12 @@ ZoneFormat.read(text, zone) -> Result<ZonedDateTime, ZoneFormat.Error>
 Closed date / leap / `Z` / epoch laws are **proved**. `Zone.at(fixed(Z), unix 0)` is **proved** in `ZONE_PROOF.bend` (`./tools/gate-zone`). Calendar movers, DST gap/fold, Moscow 15:30, and RFC 9557 are **tested**. Table: [docs/proof-status.md](docs/proof-status.md).
 
 ## Check
+
+[![CI](https://github.com/777genius/bend-time/actions/workflows/ci.yml/badge.svg)](https://github.com/777genius/bend-time/actions/workflows/ci.yml)
+
+The core compatibility matrix checks nine modules and all eight core regression
+suites on Bend **2.0.28, 2.0.34, and 2.0.36**. See
+[the pinned versions and local commands](docs/compatibility.md).
 
 This checkout is gated on Bend **2.0.5** (`0b7e2b11`) via `./tools/bend`. Pin: [docs/compatibility.md](docs/compatibility.md). bun 1.3.11, clang 14+.
 
