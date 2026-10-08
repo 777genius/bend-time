@@ -242,6 +242,11 @@ def Date.to_days(date: Date) -> U32:
     case Date{y, m, d}:
       Date.to_days.parts(y, m, d)
 
+def Date.day_of_year(+date: Date) -> U32:
+  U32.add(
+    U32.sub(Date.to_days(date), Date.to_days(Date.start_of_year(date))), 1
+  )
+
 def Date.is_eq(a: Date, b: Date) -> Bool:
   match a b:
     case Date{+y1, +m1, +d1} Date{+y2, +m2, +d2}:

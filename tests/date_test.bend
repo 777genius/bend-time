@@ -134,9 +134,26 @@ def DateTest.end_garb(
 def DateTest.quarter(name: String, date: D.Date, want: U32) -> IO(Unit):
   DateTest.ok(name, U32.is_eq(D.Date.quarter(date), want))
 
+def DateTest.ordinal(name: String, date: D.Date, want: U32) -> IO(Unit):
+  DateTest.ok(name, U32.is_eq(D.Date.day_of_year(date), want))
+
 def main() -> IO(Unit):
   do IO<Unit>:
     Unit <- DateTest.ymd("d2026", D.Date.from(2026, 9, 18), 2026, 9, 18)
+    Unit <- DateTest.ordinal("doy_jan1", D.Date{2026, 1, 1}, 1)
+    Unit <- DateTest.ordinal("doy_jan31", D.Date{2026, 1, 31}, 31)
+    Unit <- DateTest.ordinal("doy_feb1", D.Date{2026, 2, 1}, 32)
+    Unit <- DateTest.ordinal("doy_feb28_1900", D.Date{1900, 2, 28}, 59)
+    Unit <- DateTest.ordinal("doy_mar1_1900", D.Date{1900, 3, 1}, 60)
+    Unit <- DateTest.ordinal("doy_feb28_2000", D.Date{2000, 2, 28}, 59)
+    Unit <- DateTest.ordinal("doy_feb29_2000", D.Date{2000, 2, 29}, 60)
+    Unit <- DateTest.ordinal("doy_mar1_2000", D.Date{2000, 3, 1}, 61)
+    Unit <- DateTest.ordinal("doy_dec31_1900", D.Date{1900, 12, 31}, 365)
+    Unit <- DateTest.ordinal("doy_dec31_2000", D.Date{2000, 12, 31}, 366)
+    Unit <- DateTest.ordinal("doy_jan1_y1", D.Date{1, 1, 1}, 1)
+    Unit <- DateTest.ordinal("doy_dec31_y1", D.Date{1, 12, 31}, 365)
+    Unit <- DateTest.ordinal("doy_jan1_9999", D.Date{9999, 1, 1}, 1)
+    Unit <- DateTest.ordinal("doy_dec31_9999", D.Date{9999, 12, 31}, 365)
     Unit <- DateTest.from_fail("feb30", D.Date.from(2026, 2, 30))
     Unit <- DateTest.from_fail("feb29_1900", D.Date.from(1900, 2, 29))
     Unit <- DateTest.from_ok("feb29_2000", D.Date.from(2000, 2, 29))
